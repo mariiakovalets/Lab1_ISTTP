@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dormitory.Domain/Dormitory.Domain.csproj" />
+    <Project Path="src/Dormitory.Infrastructure/Dormitory.Infrastructure.csproj" />
+    <Project Path="src/Dormitory.Web/Dormitory.Web.csproj" />
+  </Folder>
+</Solution>

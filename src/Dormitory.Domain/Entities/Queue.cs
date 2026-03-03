@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Dormitory.Infrastructure;
+namespace Dormitory.Domain.Entities;
 
 public partial class Queue
 {

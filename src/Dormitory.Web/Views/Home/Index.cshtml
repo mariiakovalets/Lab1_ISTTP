@@ -1,8 +1,74 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Головна";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1>Система управління гуртожитком</h1>
+    <p>Оберіть розділ для роботи</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Студенти</h5>
+                <p class="card-text">Перегляд та управління студентами</p>
+                <a asp-controller="Students" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Кімнати</h5>
+                <p class="card-text">Перегляд та управління кімнатами</p>
+                <a asp-controller="Rooms" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Факультети</h5>
+                <p class="card-text">Перегляд та управління факультетами</p>
+                <a asp-controller="Faculties" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Заяви</h5>
+                <p class="card-text">Перегляд та управління заявами</p>
+                <a asp-controller="Applications" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Документи</h5>
+                <p class="card-text">Перегляд та управління документами</p>
+                <a asp-controller="Documents" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Адміністратори</h5>
+                <p class="card-text">Перегляд та управління адміністраторами</p>
+                <a asp-controller="Administrators" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Історія проживання</h5>
+                <p class="card-text">Перегляд історії проживання</p>
+                <a asp-controller="Residencehistory" asp-action="Index" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
 </div>

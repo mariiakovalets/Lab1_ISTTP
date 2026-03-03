@@ -1,0 +1,85 @@
+@model Dormitory.Domain.Entities.Application
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Application</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Applicationid" />
+<div class="form-group">
+    <label asp-for="Studentid" class="control-label"></label>
+    <select asp-for="Studentid" class="form-control" asp-items="ViewBag.Studentid">
+        <option value="">Оберіть студента</option>
+    </select>
+    <span asp-validation-for="Studentid" class="text-danger"></span>
+</div>
+            <div class="form-group">
+                <label asp-for="Statusid" class="control-label"></label>
+                <select asp-for="Statusid" class="form-control" asp-items="ViewBag.Statusid"></select>
+                <span asp-validation-for="Statusid" class="text-danger"></span>
+            </div>
+<div class="form-group">
+    <label asp-for="Applicationtype" class="control-label"></label>
+    <select asp-for="Applicationtype" class="form-control">
+        <option value="">Оберіть тип заяви</option>
+        <option value="Поселення">Поселення</option>
+        <option value="Пролонгація">Пролонгація</option>
+    </select>
+    <span asp-validation-for="Applicationtype" class="text-danger"></span>
+</div>
+            <div class="form-group">
+                <label asp-for="Submissiondate" class="control-label"></label>
+                <input asp-for="Submissiondate" class="form-control" />
+                <span asp-validation-for="Submissiondate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Decisiondate" class="control-label"></label>
+                <input asp-for="Decisiondate" class="form-control" />
+                <span asp-validation-for="Decisiondate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Rejectionreason" class="control-label"></label>
+                <input asp-for="Rejectionreason" class="form-control" />
+                <span asp-validation-for="Rejectionreason" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Extensionstartdate" class="control-label"></label>
+                <input asp-for="Extensionstartdate" class="form-control" />
+                <span asp-validation-for="Extensionstartdate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Extensionenddate" class="control-label"></label>
+                <input asp-for="Extensionenddate" class="form-control" />
+                <span asp-validation-for="Extensionenddate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Adminid" class="control-label"></label>
+                <select asp-for="Adminid" class="form-control" asp-items="ViewBag.Adminid"></select>
+                <span asp-validation-for="Adminid" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Academicperiod" class="control-label"></label>
+                <input asp-for="Academicperiod" class="form-control" />
+                <span asp-validation-for="Academicperiod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

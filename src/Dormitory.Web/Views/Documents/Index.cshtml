@@ -1,0 +1,68 @@
+@model IEnumerable<Dormitory.Domain.Entities.Document>
+
+@{
+    ViewData["Title"] = "Документи";
+}
+
+<h1>Список документів</h1>
+
+<p>
+    <a asp-action="Create">Створити новий</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Тип документа</th>
+            <th>
+                @Html.DisplayNameFor(model => model.Filecontent)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Issuedate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Expirydate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Uploaddate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Student.Fullname)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Type.Typename)
+            </td>
+            <td>
+                @if (item.Filecontent != null && item.Filecontent.Length > 0)
+                {
+                    <span>Є файл</span>
+                }
+                else
+                {
+                    <span>Немає</span>
+                }
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Issuedate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Expirydate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Uploaddate)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Documentid">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Documentid">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Documentid">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

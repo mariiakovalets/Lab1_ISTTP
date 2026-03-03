@@ -1,0 +1,69 @@
+@model Dormitory.Domain.Entities.Document
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Document</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Documentid" />
+            
+            <div class="form-group">
+                <label asp-for="Studentid" class="control-label"></label>
+                <select asp-for="Studentid" class="form-control" asp-items="ViewBag.Studentid"></select>
+                <span asp-validation-for="Studentid" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Typeid" class="control-label"></label>
+                <select asp-for="Typeid" class="form-control" asp-items="ViewBag.Typeid"></select>
+                <span asp-validation-for="Typeid" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Filecontent" class="control-label"></label>
+                <input type="file" name="uploadedFile" class="form-control" />
+                <span class="text-muted" style="font-size: 0.85em;">
+                    Залиште порожнім, якщо не хочете змінювати існуючий файл.
+                </span>
+                <span asp-validation-for="Filecontent" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Issuedate" class="control-label"></label>
+                <input asp-for="Issuedate" class="form-control" />
+                <span asp-validation-for="Issuedate" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Expirydate" class="control-label"></label>
+                <input asp-for="Expirydate" class="form-control" />
+                <span asp-validation-for="Expirydate" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Uploaddate" class="control-label"></label>
+                <input asp-for="Uploaddate" class="form-control" />
+                <span asp-validation-for="Uploaddate" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mt-3">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

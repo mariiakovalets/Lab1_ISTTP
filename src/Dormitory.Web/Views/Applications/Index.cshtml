@@ -1,0 +1,89 @@
+@model IEnumerable<Dormitory.Domain.Entities.Application>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Applicationtype)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Submissiondate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Decisiondate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Rejectionreason)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Extensionstartdate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Extensionenddate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Academicperiod)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Admin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Student)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Applicationtype)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Submissiondate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Decisiondate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Rejectionreason)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Extensionstartdate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Extensionenddate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Academicperiod)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Admin.Username)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status.Statusname)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Student.Fullname)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Applicationid">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Applicationid">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Applicationid">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

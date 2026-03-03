@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Infrastructure.Data;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();

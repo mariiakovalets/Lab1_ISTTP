@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Dormitory.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
+using Dormitory.Domain.Entities;
+
 namespace Dormitory.Infrastructure.Data;
 
 public partial class DormitoryContext : DbContext
@@ -35,6 +37,7 @@ public partial class DormitoryContext : DbContext
     public virtual DbSet<Room> Rooms { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -239,6 +242,7 @@ public partial class DormitoryContext : DbContext
             entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.Birthdate).HasColumnName("birthdate");
             entity.Property(e => e.Course).HasColumnName("course");
+            entity.Property(e => e.DistanceKm).HasColumnName("distance_km");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
@@ -249,6 +253,9 @@ public partial class DormitoryContext : DbContext
             entity.Property(e => e.Gender)
                 .HasMaxLength(1)
                 .HasColumnName("gender");
+            entity.Property(e => e.Phone)
+                .HasMaxLength(20)
+                .HasColumnName("phone");
 
             entity.HasOne(d => d.Faculty).WithMany(p => p.Students)
                 .HasForeignKey(d => d.Facultyid)

@@ -1,0 +1,86 @@
+@model Dormitory.Domain.Entities.Student
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Fullname" class="control-label"></label>
+                <input asp-for="Fullname" class="form-control" />
+                <span asp-validation-for="Fullname" class="text-danger"></span>
+            </div>
+<div class="form-group">
+    <label asp-for="Course" class="control-label">Курс</label>
+    <select asp-for="Course" class="form-control">
+        <option value="">Оберіть курс</option>
+<option value="1">1 курс (бакалавр)</option>
+<option value="2">2 курс (бакалавр)</option>
+<option value="3">3 курс (бакалавр)</option>
+<option value="4">4 курс (бакалавр)</option>
+<option value="5">1 курс (магістр)</option>
+<option value="6">2 курс (магістр)</option>
+    </select>
+    <span asp-validation-for="Course" class="text-danger"></span>
+</div>
+            <div class="form-group">
+                <label asp-for="Birthdate" class="control-label"></label>
+                <input asp-for="Birthdate" class="form-control" />
+                <span asp-validation-for="Birthdate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+    <label asp-for="DistanceKm" class="control-label"></label>
+    <input asp-for="DistanceKm" class="form-control" />
+    <span asp-validation-for="DistanceKm" class="text-danger"></span>
+</div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+    <label asp-for="Gender" class="control-label">Стать</label>
+    <select asp-for="Gender" class="form-control">
+        <option value="">Оберіть</option>
+        <option value="Ч">Чоловіча</option>
+        <option value="Ж">Жіноча</option>
+    </select>
+    <span asp-validation-for="Gender" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="Phone" class="control-label">Телефон</label>
+    <input asp-for="Phone" class="form-control" />
+    <span asp-validation-for="Phone" class="text-danger"></span>
+</div>
+            <div class="form-group">
+    <label asp-for="Facultyid" class="control-label">Факультет</label>
+    <select asp-for="Facultyid" class="form-control" asp-items="ViewBag.Facultyid">
+        <option value="">Оберіть факультет</option>
+    </select>
+    <span asp-validation-for="Facultyid" class="text-danger"></span>
+</div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

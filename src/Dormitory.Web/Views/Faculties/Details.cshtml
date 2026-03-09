@@ -1,13 +1,13 @@
 @model Dormitory.Domain.Entities.Faculty
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Деталі";
 }
 
-<h1>Details</h1>
+<h1>Деталі</h1>
 
 <div>
-    <h4>Faculty</h4>
+    <h4>Факультет</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -19,6 +19,6 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Facultyid">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Facultyid">Редагувати</a> |
+    <a asp-action="Index">Назад до списку</a>
 </div>

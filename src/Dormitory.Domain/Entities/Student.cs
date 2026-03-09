@@ -18,6 +18,7 @@ public partial class Student
 
     [Display(Name = "Дата народження")]
     [Required(ErrorMessage = "Введіть дату народження")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}", ApplyFormatInEditMode = false)]
     public DateOnly? Birthdate { get; set; }
 
     [Display(Name = "Адреса")]
@@ -39,7 +40,6 @@ public partial class Student
 
     [Display(Name = "Телефон")]
     [Required(ErrorMessage = "Введіть телефон")]
-    [Phone(ErrorMessage = "Введіть коректний номер телефону")]
     public string? Phone { get; set; }
 
     [Display(Name = "Відстань (км)")]

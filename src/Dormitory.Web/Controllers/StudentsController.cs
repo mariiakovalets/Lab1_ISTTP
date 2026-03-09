@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
-using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {
@@ -30,18 +29,13 @@ namespace Dormitory.Web.Controllers
         // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var student = await _context.Students
                 .Include(s => s.Faculty)
                 .FirstOrDefaultAsync(m => m.Studentid == id);
-            if (student == null)
-            {
-                return NotFound();
-            }
+
+            if (student == null) return NotFound();
 
             return View(student);
         }
@@ -54,18 +48,41 @@ namespace Dormitory.Web.Controllers
         }
 
         // POST: Students/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm")] Student student)
         {
+            // Нормалізуємо телефон перед валідацією
+            if (!string.IsNullOrEmpty(student.Phone))
+            {
+                student.Phone = student.Phone
+                    .Replace(" ", "")
+                    .Replace("-", "")
+                    .Replace("(", "")
+                    .Replace(")", "");
+
+                ModelState.Remove("Phone");
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    student.Phone, @"^(\+380|0)\d{9}$"))
+                {
+                    ModelState.AddModelError("Phone",
+                        "Введіть номер у форматі 0XXXXXXXXX або +380XXXXXXXXX");
+                }
+            }
+
+            if (student.Birthdate < new DateOnly(1995, 1, 1) || student.Birthdate > new DateOnly(2009, 12, 31))
+            {
+                ModelState.AddModelError("Birthdate", "Дата народження має бути між 1995 і 2009 роком");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(student);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["Facultyid"] = new SelectList(_context.Faculties, "Facultyid", "Facultyname", student.Facultyid);
             return View(student);
         }
@@ -73,30 +90,44 @@ namespace Dormitory.Web.Controllers
         // GET: Students/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var student = await _context.Students.FindAsync(id);
-            if (student == null)
-            {
-                return NotFound();
-            }
+            if (student == null) return NotFound();
+
             ViewData["Facultyid"] = new SelectList(_context.Faculties, "Facultyid", "Facultyname", student.Facultyid);
             return View(student);
         }
 
         // POST: Students/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm")] Student student)
         {
-            if (id != student.Studentid)
+            if (id != student.Studentid) return NotFound();
+
+            // Нормалізуємо телефон перед валідацією
+            if (!string.IsNullOrEmpty(student.Phone))
             {
-                return NotFound();
+                student.Phone = student.Phone
+                    .Replace(" ", "")
+                    .Replace("-", "")
+                    .Replace("(", "")
+                    .Replace(")", "");
+
+                ModelState.Remove("Phone");
+
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    student.Phone, @"^(\+380|0)\d{9}$"))
+                {
+                    ModelState.AddModelError("Phone",
+                        "Введіть номер у форматі 0XXXXXXXXX або +380XXXXXXXXX");
+                }
+            }
+
+            if (student.Birthdate < new DateOnly(1995, 1, 1) || student.Birthdate > new DateOnly(2009, 12, 31))
+            {
+                ModelState.AddModelError("Birthdate", "Дата народження має бути між 1995 і 2009 роком");
             }
 
             if (ModelState.IsValid)
@@ -109,16 +140,13 @@ namespace Dormitory.Web.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!StudentExists(student.Studentid))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["Facultyid"] = new SelectList(_context.Faculties, "Facultyid", "Facultyname", student.Facultyid);
             return View(student);
         }
@@ -126,18 +154,13 @@ namespace Dormitory.Web.Controllers
         // GET: Students/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var student = await _context.Students
                 .Include(s => s.Faculty)
                 .FirstOrDefaultAsync(m => m.Studentid == id);
-            if (student == null)
-            {
-                return NotFound();
-            }
+
+            if (student == null) return NotFound();
 
             return View(student);
         }

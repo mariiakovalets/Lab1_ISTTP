@@ -1,13 +1,13 @@
 @model IEnumerable<Dormitory.Domain.Entities.Room>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Кімнати";
 }
 
-<h1>Index</h1>
+<h1>Список кімнат</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create">Додати нову кімнату</a>
 </p>
 <table class="table">
     <thead>
@@ -37,9 +37,9 @@
                 @Html.DisplayFor(modelItem => item.Capacity)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Roomid">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Roomid">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Roomid">Delete</a>
+                <a asp-action="Edit" asp-route-id="@item.Roomid">Редагувати</a> |
+                <a asp-action="Details" asp-route-id="@item.Roomid">Деталі</a> |
+                <a asp-action="Delete" asp-route-id="@item.Roomid">Видалити</a>
             </td>
         </tr>
 }

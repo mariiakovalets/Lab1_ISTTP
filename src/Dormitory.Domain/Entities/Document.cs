@@ -17,7 +17,7 @@ public partial class Document
     public int Typeid { get; set; }
 
     [Display(Name = "Скан-копія")]
-    public byte[] Filecontent { get; set; } = null!;
+    public byte[]? Filecontent { get; set; }
 
     [Display(Name = "Дата видачі")]
     [DataType(DataType.Date)] 
@@ -30,6 +30,7 @@ public partial class Document
     public DateTime? Expirydate { get; set; }
 
     [Display(Name = "Дата завантаження")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}")]
     public DateTime? Uploaddate { get; set; }
 
     public virtual Student? Student { get; set; }

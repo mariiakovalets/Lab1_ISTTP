@@ -1,54 +1,63 @@
 @model Dormitory.Domain.Entities.Document
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Деталі";
 }
 
-<h1>Details</h1>
+<h1>Деталі</h1>
 
 <div>
-    <h4>Document</h4>
+    <h4>Документ</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Filecontent)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Filecontent)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Issuedate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Issuedate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Expirydate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Expirydate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Uploaddate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Uploaddate)
-        </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Student)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Student.Fullname)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Type)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Type.Typename)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Filecontent)
+        </dt>
+        <dd class="col-sm-10">
+            @if (Model.Filecontent != null && Model.Filecontent.Length > 0)
+            {
+                <a asp-action="Download" asp-route-id="@Model.Documentid" class="btn btn-sm btn-outline-primary">
+                    Завантажити файл
+                </a>
+            }
+            else
+            {
+                <span class="text-muted">Файл не завантажено</span>
+            }
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Issuedate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Issuedate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Expirydate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Expirydate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Uploaddate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Uploaddate)
         </dd>
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Documentid">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Documentid">Редагувати</a> |
+    <a asp-action="Index">Назад до списку</a>
 </div>

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
-using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {

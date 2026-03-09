@@ -22,19 +22,24 @@ public partial class Application : IValidatableObject
     public string? Applicationtype { get; set; }
 
     [Display(Name = "Дата подачі")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy HH:mm}", ApplyFormatInEditMode = false)]
     public DateTime? Submissiondate { get; set; }
 
     [Display(Name = "Дата рішення")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy HH:mm}", ApplyFormatInEditMode = false)]
     public DateTime? Decisiondate { get; set; }
 
     [Display(Name = "Причина відмови")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy HH:mm}", ApplyFormatInEditMode = false)]
     public string? Rejectionreason { get; set; }
 
 
     [Display(Name = "Початок пролонгації")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}", ApplyFormatInEditMode = false)]
     public DateOnly? Extensionstartdate { get; set; }
 
     [Display(Name = "Кінець пролонгації")]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}", ApplyFormatInEditMode = false)]
     public DateOnly? Extensionenddate { get; set; }
 
     [Display(Name = "Адміністратор")]

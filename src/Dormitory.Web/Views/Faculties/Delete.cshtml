@@ -1,14 +1,14 @@
 @model Dormitory.Domain.Entities.Faculty
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Видалення";
 }
 
-<h1>Delete</h1>
+<h1>Видалення</h1>
 
-<h3>Are you sure you want to delete this?</h3>
+<h3>Ви впевнені, що хочете видалити це?</h3>
 <div>
-    <h4>Faculty</h4>
+    <h4>Факультет</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
@@ -21,7 +21,7 @@
     
     <form asp-action="Delete">
         <input type="hidden" asp-for="Facultyid" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+        <input type="submit" value="Видалити" class="btn btn-danger" /> |
+        <a asp-action="Index">Назад до списку</a>
     </form>
 </div>

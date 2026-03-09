@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
-using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {
@@ -20,34 +19,25 @@ namespace Dormitory.Web.Controllers
             _context = context;
         }
 
-        // GET: Documents
         public async Task<IActionResult> Index()
         {
             var dormitoryContext = _context.Documents.Include(d => d.Student).Include(d => d.Type);
             return View(await dormitoryContext.ToListAsync());
         }
 
-        // GET: Documents/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var document = await _context.Documents
                 .Include(d => d.Student)
                 .Include(d => d.Type)
                 .FirstOrDefaultAsync(m => m.Documentid == id);
-            if (document == null)
-            {
-                return NotFound();
-            }
 
+            if (document == null) return NotFound();
             return View(document);
         }
 
-        // GET: Documents/Create
         public IActionResult Create()
         {
             ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname");
@@ -55,184 +45,211 @@ namespace Dormitory.Web.Controllers
             return View();
         }
 
-        // POST: Documents/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Create([Bind("Documentid,Studentid,Typeid,Issuedate,Expirydate,Uploaddate")] Document document, IFormFile uploadedFile)
-{
-    // --- 1. Логіка збереження файлу ---
-    if (uploadedFile != null && uploadedFile.Length > 0)
-    {
-        using (var memoryStream = new MemoryStream())
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Documentid,Studentid,Typeid,Issuedate,Expirydate")] Document document, IFormFile uploadedFile)
         {
-            await uploadedFile.CopyToAsync(memoryStream);
-            document.Filecontent = memoryStream.ToArray();
-        }
-    }
-    else
-    {
-        document.Filecontent = new byte[0];
-    }
-    ModelState.Remove("Filecontent");
-
-    // --- 2. РОЗУМНА ВАЛІДАЦІЯ ---
-    // УВАГА: якщо _context.Document_types підкреслює червоним, зміни на _context.DocumentTypes
-    var docType = await _context.DocumentTypes.FindAsync(document.Typeid); 
-    
-    if (docType != null)
-    {
-        if (docType.RequiresIssueDate == true && !document.Issuedate.HasValue)
-        {
-            ModelState.AddModelError("Issuedate", "Цей тип документа вимагає обов'язково вказати дату видачі!");
-        }
-
-        if (docType.IsLifetime == false && !document.Expirydate.HasValue)
-        {
-            ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
-        }
-    }
-
-    // --- 3. Збереження ---
-    if (ModelState.IsValid)
-    {
-        _context.Add(document);
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-    
-    // --- 4. ОСЬ ЦЕЙ ШМАТОК БУВ ВТРАЧЕНИЙ ---
-    // Якщо є помилка, повертаємо користувача на форму і заново малюємо випадаючі списки
-    ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", document.Studentid);
-    
-    // Знову ж таки, якщо _context.Document_types світиться червоним, зміни на DocumentTypes
-    ViewData["Typeid"] = new SelectList(_context.DocumentTypes, "Typeid", "Typename", document.Typeid);
-    
-    return View(document); // Повертаємо сторінку з червоним текстом помилок
-}
-    
-
-        // GET: Documents/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
+            // Файл
+            if (uploadedFile != null && uploadedFile.Length > 0)
             {
-                return NotFound();
+                using var memoryStream = new MemoryStream();
+                await uploadedFile.CopyToAsync(memoryStream);
+                document.Filecontent = memoryStream.ToArray();
             }
 
-            var document = await _context.Documents.FindAsync(id);
-            if (document == null)
+            // Дата завантаження — завжди сьогодні
+            document.Uploaddate = DateTime.Now;
+
+            ModelState.Remove("Filecontent");
+            ModelState.Remove("Uploaddate");
+
+            // При Create — файл обов'язковий (після Remove!)
+            if (uploadedFile == null || uploadedFile.Length == 0)
             {
-                return NotFound();
+                ModelState.AddModelError("Filecontent", "Завантажте скан-копію документа!");
             }
+
+            // Перевірка на дублікат документа
+            var exists = await _context.Documents
+                .AnyAsync(d => d.Studentid == document.Studentid && d.Typeid == document.Typeid);
+            if (exists)
+                ModelState.AddModelError("Typeid", "Цей студент вже має документ цього типу!");
+
+            // Валідація типу документа
+            var docType = await _context.DocumentTypes.FindAsync(document.Typeid);
+            if (docType != null)
+            {
+                if (docType.RequiresIssueDate == true && !document.Issuedate.HasValue)
+                    ModelState.AddModelError("Issuedate", "Цей тип документа вимагає обов'язково вказати дату видачі!");
+
+                if (docType.IsLifetime == false && !document.Expirydate.HasValue)
+                    ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
+            }
+
+            // Валідація дат
+            ValidateDates(document, docType);
+
+            if (ModelState.IsValid)
+            {
+                _context.Add(document);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
             ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", document.Studentid);
             ViewData["Typeid"] = new SelectList(_context.DocumentTypes, "Typeid", "Typename", document.Typeid);
             return View(document);
         }
 
-        // POST: Documents/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Edit(int id, [Bind("Documentid,Studentid,Typeid,Issuedate,Expirydate,Uploaddate")] Document document, IFormFile uploadedFile)
-{
-    if (id != document.Documentid)
-    {
-        return NotFound();
-    }
-
-    // --- 1. РОЗУМНА ВАЛІДАЦІЯ ДАТ (як і при створенні) ---
-    var docType = await _context.DocumentTypes.FindAsync(document.Typeid); 
-    if (docType != null)
-    {
-        if (docType.RequiresIssueDate == true && !document.Issuedate.HasValue)
+        public async Task<IActionResult> Edit(int? id)
         {
-            ModelState.AddModelError("Issuedate", "Цей тип документа вимагає обов'язково вказати дату видачі!");
+            if (id == null) return NotFound();
+
+            var document = await _context.Documents.FindAsync(id);
+            if (document == null) return NotFound();
+
+            ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", document.Studentid);
+            ViewData["Typeid"] = new SelectList(_context.DocumentTypes, "Typeid", "Typename", document.Typeid);
+            return View(document);
         }
-        if (docType.IsLifetime == false && !document.Expirydate.HasValue)
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Documentid,Studentid,Typeid,Issuedate,Expirydate")] Document document, IFormFile uploadedFile)
         {
-            ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
-        }
-    }
+            if (id != document.Documentid) return NotFound();
 
-    ModelState.Remove("Filecontent"); // Просимо не сваритися на файл
+            ModelState.Remove("Filecontent");
+            ModelState.Remove("Uploaddate");
 
-    if (ModelState.IsValid)
-    {
-        try
-        {
-            // --- 2. ЛОГІКА ЗБЕРЕЖЕННЯ ---
-            // Знаходимо старий документ у базі даних
-            var existingDoc = await _context.Documents.FindAsync(id);
-            if (existingDoc == null) return NotFound();
-
-            // Оновлюємо звичайні дані
-            existingDoc.Studentid = document.Studentid;
-            existingDoc.Typeid = document.Typeid;
-            existingDoc.Issuedate = document.Issuedate;
-            existingDoc.Expirydate = document.Expirydate;
-            existingDoc.Uploaddate = document.Uploaddate;
-
-            // Якщо користувач завантажив НОВИЙ файл - перезаписуємо
-            if (uploadedFile != null && uploadedFile.Length > 0)
+            // Валідація типу документа
+            var docType = await _context.DocumentTypes.FindAsync(document.Typeid);
+            if (docType != null)
             {
-                using (var memoryStream = new MemoryStream())
+                if (docType.RequiresIssueDate == true && !document.Issuedate.HasValue)
+                    ModelState.AddModelError("Issuedate", "Цей тип документа вимагає обов'язково вказати дату видачі!");
+
+                if (docType.IsLifetime == false && !document.Expirydate.HasValue)
+                    ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
+            }
+
+            // Валідація дат
+            ValidateDates(document, docType);
+
+            if (ModelState.IsValid)
+            {
+                try
                 {
-                    await uploadedFile.CopyToAsync(memoryStream);
-                    existingDoc.Filecontent = memoryStream.ToArray();
+                    var existingDoc = await _context.Documents.FindAsync(id);
+                    if (existingDoc == null) return NotFound();
+
+                    existingDoc.Studentid = document.Studentid;
+                    existingDoc.Typeid = document.Typeid;
+                    existingDoc.Issuedate = document.Issuedate;
+                    existingDoc.Expirydate = document.Expirydate;
+
+                    // При Edit — файл необов'язковий (залишається старий)
+                    if (uploadedFile != null && uploadedFile.Length > 0)
+                    {
+                        using var memoryStream = new MemoryStream();
+                        await uploadedFile.CopyToAsync(memoryStream);
+                        existingDoc.Filecontent = memoryStream.ToArray();
+                    }
+
+                    _context.Update(existingDoc);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!DocumentExists(document.Documentid)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", document.Studentid);
+            ViewData["Typeid"] = new SelectList(_context.DocumentTypes, "Typeid", "Typename", document.Typeid);
+            return View(document);
+        }
+
+        private void ValidateDates(Document document, DocumentType? docType)
+        {
+            // Дата видачі не може бути в майбутньому
+            if (document.Issuedate.HasValue && document.Issuedate > DateTime.Today)
+                ModelState.AddModelError("Issuedate", "Дата видачі не може бути в майбутньому");
+
+            // Дата видачі не раніше 2010
+            if (document.Issuedate.HasValue && document.Issuedate < new DateTime(2010, 1, 1))
+                ModelState.AddModelError("Issuedate", "Дата видачі не може бути раніше 2010 року");
+
+            // Дата закінчення має бути ПІЗНІШЕ дати видачі (не рівна!)
+            if (document.Issuedate.HasValue && document.Expirydate.HasValue)
+            {
+                if (document.Expirydate <= document.Issuedate)
+                    ModelState.AddModelError("Expirydate", "Дата закінчення має бути пізніше дати видачі");
+
+                // Флюорографія діє рівно 1 рік
+                if (docType != null && docType.Typename == "Флюорографія")
+                {
+                    var expectedExpiry = document.Issuedate.Value.AddYears(1);
+                    if (document.Expirydate.Value.Date != expectedExpiry.Date)
+                        ModelState.AddModelError("Expirydate", $"Флюорографія дійсна рівно 1 рік — дата закінчення має бути {expectedExpiry:dd.MM.yyyy}");
                 }
             }
-            // Якщо новий файл не завантажили - existingDoc.Filecontent просто залишиться старим!
-
-            _context.Update(existingDoc);
-            await _context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
+
+        public async Task<IActionResult> Download(int? id)
         {
-            if (!DocumentExists(document.Documentid)) return NotFound();
-            else throw;
-        }
-        return RedirectToAction(nameof(Index));
-    }
-    
-    // Якщо є помилки, повертаємо на сторінку
-    ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", document.Studentid);
-    ViewData["Typeid"] = new SelectList(_context.DocumentTypes, "Typeid", "Typename", document.Typeid);
-    return View(document);
-}
+            if (id == null) return NotFound();
 
-        // GET: Documents/Delete/5
+            var document = await _context.Documents
+                .Include(d => d.Type)
+                .FirstOrDefaultAsync(d => d.Documentid == id);
+
+            if (document == null || document.Filecontent == null || document.Filecontent.Length == 0)
+                return NotFound();
+
+            string contentType = "application/octet-stream";
+            string extension = "bin";
+
+            if (document.Filecontent.Length > 3)
+            {
+                // PDF: %PDF
+                if (document.Filecontent[0] == 0x25 && document.Filecontent[1] == 0x50)
+                { contentType = "application/pdf"; extension = "pdf"; }
+                // JPG: FF D8
+                else if (document.Filecontent[0] == 0xFF && document.Filecontent[1] == 0xD8)
+                { contentType = "image/jpeg"; extension = "jpg"; }
+                // PNG: 89 50 4E 47
+                else if (document.Filecontent[0] == 0x89 && document.Filecontent[1] == 0x50)
+                { contentType = "image/png"; extension = "png"; }
+            }
+
+            string typeName = document.Type?.Typename ?? "Document";
+            string fileName = $"{typeName}_{id}.{extension}";
+            return File(document.Filecontent, contentType, fileName);
+        }
+
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var document = await _context.Documents
                 .Include(d => d.Student)
                 .Include(d => d.Type)
                 .FirstOrDefaultAsync(m => m.Documentid == id);
-            if (document == null)
-            {
-                return NotFound();
-            }
 
+            if (document == null) return NotFound();
             return View(document);
         }
 
-        // POST: Documents/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var document = await _context.Documents.FindAsync(id);
             if (document != null)
-            {
                 _context.Documents.Remove(document);
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

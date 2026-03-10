@@ -50,7 +50,7 @@ namespace Dormitory.Web.Controllers
         // POST: Students/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm")] Student student)
+        public async Task<IActionResult> Create([Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm,HasPrivilege")] Student student)
         {
             // Нормалізуємо телефон перед валідацією
             if (!string.IsNullOrEmpty(student.Phone))
@@ -102,7 +102,7 @@ namespace Dormitory.Web.Controllers
         // POST: Students/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm")] Student student)
+        public async Task<IActionResult> Edit(int id, [Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm,HasPrivilege")] Student student)
         {
             if (id != student.Studentid) return NotFound();
 

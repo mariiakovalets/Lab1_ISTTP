@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dormitory.Domain.Entities;
 
@@ -18,7 +19,7 @@ public partial class Student
 
     [Display(Name = "Дата народження")]
     [Required(ErrorMessage = "Введіть дату народження")]
-    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}", ApplyFormatInEditMode = false)]
+    [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy}")]
     public DateOnly? Birthdate { get; set; }
 
     [Display(Name = "Адреса")]
@@ -46,6 +47,9 @@ public partial class Student
     [Required(ErrorMessage = "Введіть відстань до Києва")]
     [Range(1, int.MaxValue, ErrorMessage = "Відстань має бути більше 0 км")]
     public int? DistanceKm { get; set; }
+[Display(Name = "Пільга")]
+[Column("has_privilege")]
+public bool HasPrivilege { get; set; } = false;
 
     public virtual Application? Application { get; set; }
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();

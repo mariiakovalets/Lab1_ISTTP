@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Dormitory.Web</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap_pulse.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Dormitory.Web.styles.css" asp-append-version="true" />
 </head>
@@ -33,6 +33,9 @@
     </li>
     <li class="nav-item">
         <a class="nav-link text-dark" asp-controller="Applications" asp-action="Index">Заяви</a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link text-dark" asp-controller="Queues" asp-action="Index">Черга</a>
     </li>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle text-dark" href="#" data-bs-toggle="dropdown">Адміністрування</a>

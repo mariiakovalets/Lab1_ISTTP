@@ -1,0 +1,40 @@
+@model IEnumerable<Dormitory.Domain.Entities.Queue>
+
+@{
+    ViewData["Title"] = "Черга на поселення";
+}
+
+<h1>Черга на поселення</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Черга порожня</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Позиція</th>
+                <th>Студент</th>
+                <th>Пільга</th>
+                <th>Відстань (км)</th>
+                <th>Тип заяви</th>
+                <th>Статус заяви</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Position</td>
+                    <td>@item.Application?.Student?.Fullname</td>
+                    <td>@(item.Application?.Student?.HasPrivilege == true ? "Так" : "Ні")</td>
+                    <td>@item.Application?.Student?.DistanceKm</td>
+                    <td>@item.Application?.Applicationtype</td>
+                    <td>@item.Application?.Status?.Statusname</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -21,7 +21,12 @@ namespace Dormitory.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var dormitoryContext = _context.Applications.Include(a => a.Admin).Include(a => a.Status).Include(a => a.Student);
+            var dormitoryContext = _context.Applications
+                .AsNoTracking()
+                .Include(a => a.Admin)
+                .Include(a => a.Status)
+                .Include(a => a.Student)
+                .OrderByDescending(a => a.Submissiondate);
             return View(await dormitoryContext.ToListAsync());
         }
 
@@ -51,6 +56,15 @@ namespace Dormitory.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Applicationid,Studentid,Statusid,Applicationtype,Submissiondate,Decisiondate,Rejectionreason,Extensionstartdate,Extensionenddate,Adminid,Academicperiod")] Application application)
         {
+            // Перевірка чи студент вже заселений
+            if (application.Applicationtype == "Поселення")
+            {
+                var alreadySettled = await _context.Residencehistories
+                    .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
+                if (alreadySettled)
+                    ModelState.AddModelError("Studentid", "Цей студент вже заселений!");
+            }
+
             ValidateDates(application);
 
             if (ModelState.IsValid)
@@ -84,6 +98,23 @@ namespace Dormitory.Web.Controllers
         {
             if (id != application.Applicationid) return NotFound();
 
+            // Перевірка чи студент вже має активну заяву на поселення (крім поточної)
+            if (application.Applicationtype == "Поселення")
+            {
+                var alreadySettled = await _context.Residencehistories
+                    .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
+                if (alreadySettled)
+                    ModelState.AddModelError("Studentid", "Цей студент вже заселений!");
+
+                var duplicateApplication = await _context.Applications
+                    .AnyAsync(a => a.Studentid == application.Studentid
+                                && a.Applicationtype == "Поселення"
+                                && a.Applicationid != application.Applicationid
+                                && a.Decisiondate == null);
+                if (duplicateApplication)
+                    ModelState.AddModelError("Studentid", "Цей студент вже має активну заяву на поселення!");
+            }
+
             ValidateDates(application);
 
             if (ModelState.IsValid)
@@ -92,6 +123,25 @@ namespace Dormitory.Web.Controllers
                 {
                     _context.Update(application);
                     await _context.SaveChangesAsync();
+
+                    // Логіка при схваленні заяви на поселення
+                    if (application.Statusid == 2 && application.Applicationtype == "Поселення")
+                    {
+                        var alreadyInQueue = await _context.Queues
+                            .AnyAsync(q => q.Applicationid == application.Applicationid);
+                        var alreadySettled = await _context.Residencehistories
+                            .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
+
+                        if (!alreadyInQueue && !alreadySettled)
+                        {
+                            var assigned = await TryAssignRoom(application);
+                            if (!assigned)
+                            {
+                                var student = await _context.Students.FindAsync(application.Studentid);
+                                await RecalculateQueuePositions(application.Applicationid, student);
+                            }
+                        }
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -107,6 +157,84 @@ namespace Dormitory.Web.Controllers
             ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", application.Studentid);
             return View(application);
         }
+
+        private async Task<bool> TryAssignRoom(Application application)
+        {
+            var student = await _context.Students.FindAsync(application.Studentid);
+            if (student == null) return false;
+
+            var rooms = await _context.Rooms.ToListAsync();
+
+            foreach (var room in rooms)
+            {
+                var currentResidents = await _context.Residencehistories
+                    .Include(r => r.Student)
+                    .Where(r => r.Roomid == room.Roomid && r.Checkoutdate == null)
+                    .ToListAsync();
+
+                var occupiedSpaces = currentResidents.Count;
+
+                if (occupiedSpaces >= room.Capacity) continue;
+
+                if (currentResidents.Any())
+                {
+                    var roomGender = currentResidents.First().Student?.Gender;
+                    if (roomGender != student.Gender) continue;
+                }
+
+                // Заселяємо!
+                _context.Residencehistories.Add(new Residencehistory
+                {
+                    Studentid = application.Studentid,
+                    Roomid = room.Roomid,
+                    Checkindate = DateTime.Today
+                });
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+
+        private async Task RecalculateQueuePositions(int newApplicationId, Student? newStudent)
+{
+    // Завантажуємо студента свіжо з БД щоб мати всі поля
+    if (newStudent?.Studentid != null)
+        newStudent = await _context.Students.FindAsync(newStudent.Studentid);
+
+    var queueEntries = await _context.Queues
+        .Include(q => q.Application)
+            .ThenInclude(a => a!.Student)
+        .ToListAsync();
+
+    queueEntries.Add(new Queue
+    {
+        Applicationid = newApplicationId,
+        Application = new Application
+        {
+            Applicationid = newApplicationId,
+            Student = newStudent
+        }
+    });
+
+    var sorted = queueEntries
+        .OrderByDescending(q => q.Application?.Student?.HasPrivilege ?? false)
+        .ThenByDescending(q => q.Application?.Student?.DistanceKm ?? 0)
+        .ToList();
+
+    _context.Queues.RemoveRange(await _context.Queues.ToListAsync());
+
+    for (int i = 0; i < sorted.Count; i++)
+    {
+        _context.Queues.Add(new Queue
+        {
+            Applicationid = sorted[i].Applicationid,
+            Position = i + 1
+        });
+    }
+
+    await _context.SaveChangesAsync();
+}
 
         public async Task<IActionResult> Delete(int? id)
         {
@@ -136,28 +264,24 @@ namespace Dormitory.Web.Controllers
 
         private void ValidateDates(Application application)
         {
-// Дата рішення не може бути в майбутньому
-if (application.Decisiondate.HasValue && application.Decisiondate > DateTime.Now)
-    ModelState.AddModelError("Decisiondate", "Дата рішення не може бути в майбутньому");
+            if (application.Submissiondate.HasValue && application.Submissiondate > DateTime.Now)
+                ModelState.AddModelError("Submissiondate", "Дата подачі не може бути в майбутньому");
 
-// Дата рішення не пізніше ніж через 3 дні від дати подачі
-if (application.Decisiondate.HasValue && application.Submissiondate.HasValue)
-{
-    if (application.Decisiondate < application.Submissiondate)
-        ModelState.AddModelError("Decisiondate", "Дата рішення не може бути раніше дати подачі");
-    
-    if (application.Decisiondate > application.Submissiondate.Value.AddDays(5))
-        ModelState.AddModelError("Decisiondate", "Дата рішення має бути не пізніше ніж через 5 днів від дати подачі");
-}
+            if (application.Submissiondate.HasValue && application.Submissiondate < new DateTime(2010, 1, 1))
+                ModelState.AddModelError("Submissiondate", "Дата подачі не може бути раніше 2010 року");
 
-            // Дата рішення не раніше дати подачі
+            if (application.Decisiondate.HasValue && application.Decisiondate > DateTime.Now)
+                ModelState.AddModelError("Decisiondate", "Дата рішення не може бути в майбутньому");
+
             if (application.Decisiondate.HasValue && application.Submissiondate.HasValue)
             {
                 if (application.Decisiondate < application.Submissiondate)
                     ModelState.AddModelError("Decisiondate", "Дата рішення не може бути раніше дати подачі");
+
+                if (application.Decisiondate > application.Submissiondate.Value.AddDays(5))
+                    ModelState.AddModelError("Decisiondate", "Дата рішення має бути не пізніше ніж через 5 днів від дати подачі");
             }
 
-            // Дата початку продовження не пізніше дати кінця
             if (application.Extensionstartdate.HasValue && application.Extensionenddate.HasValue)
             {
                 if (application.Extensionenddate < application.Extensionstartdate)

@@ -124,6 +124,24 @@ namespace Dormitory.Web.Controllers
                     _context.Update(application);
                     await _context.SaveChangesAsync();
 
+                    // Якщо заяву відхилено — видаляємо з черги
+                    if (application.Statusid == 3)
+                    {
+                        var queueEntry = await _context.Queues
+                            .FirstOrDefaultAsync(q => q.Applicationid == application.Applicationid);
+                        if (queueEntry != null)
+                        {
+                            _context.Queues.Remove(queueEntry);
+                            await _context.SaveChangesAsync();
+
+                            // Перераховуємо позиції
+                            var remaining = await _context.Queues.OrderBy(q => q.Position).ToListAsync();
+                            for (int i = 0; i < remaining.Count; i++)
+                                remaining[i].Position = i + 1;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
                     // Логіка при схваленні заяви на поселення
                     if (application.Statusid == 2 && application.Applicationtype == "Поселення")
                     {
@@ -197,44 +215,44 @@ namespace Dormitory.Web.Controllers
         }
 
         private async Task RecalculateQueuePositions(int newApplicationId, Student? newStudent)
-{
-    // Завантажуємо студента свіжо з БД щоб мати всі поля
-    if (newStudent?.Studentid != null)
-        newStudent = await _context.Students.FindAsync(newStudent.Studentid);
-
-    var queueEntries = await _context.Queues
-        .Include(q => q.Application)
-            .ThenInclude(a => a!.Student)
-        .ToListAsync();
-
-    queueEntries.Add(new Queue
-    {
-        Applicationid = newApplicationId,
-        Application = new Application
         {
-            Applicationid = newApplicationId,
-            Student = newStudent
+            // Завантажуємо студента свіжо з БД щоб мати всі поля
+            if (newStudent?.Studentid != null)
+                newStudent = await _context.Students.FindAsync(newStudent.Studentid);
+
+            var queueEntries = await _context.Queues
+                .Include(q => q.Application)
+                    .ThenInclude(a => a!.Student)
+                .ToListAsync();
+
+            queueEntries.Add(new Queue
+            {
+                Applicationid = newApplicationId,
+                Application = new Application
+                {
+                    Applicationid = newApplicationId,
+                    Student = newStudent
+                }
+            });
+
+            var sorted = queueEntries
+                .OrderByDescending(q => q.Application?.Student?.HasPrivilege ?? false)
+                .ThenByDescending(q => q.Application?.Student?.DistanceKm ?? 0)
+                .ToList();
+
+            _context.Queues.RemoveRange(await _context.Queues.ToListAsync());
+
+            for (int i = 0; i < sorted.Count; i++)
+            {
+                _context.Queues.Add(new Queue
+                {
+                    Applicationid = sorted[i].Applicationid,
+                    Position = i + 1
+                });
+            }
+
+            await _context.SaveChangesAsync();
         }
-    });
-
-    var sorted = queueEntries
-        .OrderByDescending(q => q.Application?.Student?.HasPrivilege ?? false)
-        .ThenByDescending(q => q.Application?.Student?.DistanceKm ?? 0)
-        .ToList();
-
-    _context.Queues.RemoveRange(await _context.Queues.ToListAsync());
-
-    for (int i = 0; i < sorted.Count; i++)
-    {
-        _context.Queues.Add(new Queue
-        {
-            Applicationid = sorted[i].Applicationid,
-            Position = i + 1
-        });
-    }
-
-    await _context.SaveChangesAsync();
-}
 
         public async Task<IActionResult> Delete(int? id)
         {

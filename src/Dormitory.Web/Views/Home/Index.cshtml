@@ -72,3 +72,231 @@
         </div>
     </div>
 </div>
+
+<div class="mt-5">
+    <h2 id="statsToggle" style="cursor:pointer; user-select:none;" class="mb-0">
+        Діаграми <span id="statsArrow" style="font-size:1.2rem;">▾</span>
+    </h2>
+    <hr class="mt-2 mb-0">
+
+    <div id="statsBlock" style="display:none;">
+        <div class="row g-4 mt-1">
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase fw-semibold mb-3"
+                            style="font-size:0.75rem; letter-spacing:0.08em">
+                            Студенти по факультетах
+                        </h6>
+                        <div style="position:relative; height:260px;">
+                            <canvas id="studentsByFacultyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase fw-semibold mb-3"
+                            style="font-size:0.75rem; letter-spacing:0.08em">
+                            Студенти по курсах
+                        </h6>
+                        <div style="position:relative; height:260px;">
+                            <canvas id="studentsByCourseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase fw-semibold mb-3"
+                            style="font-size:0.75rem; letter-spacing:0.08em">
+                            Статуси заяв
+                        </h6>
+                        <div style="display:flex; gap:16px; margin-bottom:10px; font-size:12px; color:#888;">
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <span style="width:10px;height:10px;border-radius:2px;background:#D85A30;display:inline-block;"></span>Відхилено
+                            </span>
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <span style="width:10px;height:10px;border-radius:2px;background:#534AB7;display:inline-block;"></span>Схвалено
+                            </span>
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <span style="width:10px;height:10px;border-radius:2px;background:#AFA9EC;display:inline-block;"></span>На розгляді
+                            </span>
+                        </div>
+                        <div style="position:relative; height:240px;">
+                            <canvas id="applicationsByStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h6 class="text-muted text-uppercase fw-semibold mb-3"
+                            style="font-size:0.75rem; letter-spacing:0.08em">
+                            Заселеність кімнат
+                        </h6>
+                        <div style="display:flex; gap:16px; margin-bottom:10px; font-size:12px; color:#888;">
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <span style="width:10px;height:10px;border-radius:2px;background:#534AB7;display:inline-block;"></span>Зайнято
+                            </span>
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;border:1px solid #d0cdf5;display:inline-block;"></span>Вільно
+                            </span>
+                        </div>
+                        <div style="position:relative; height:240px;">
+                            <canvas id="roomOccupancyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const grid = 'rgba(0,0,0,0.05)';
+    Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.font.size   = 13;
+    Chart.defaults.color       = '#888';
+
+    let chartsLoaded = false;
+
+    document.getElementById('statsToggle').addEventListener('click', function () {
+        const block = document.getElementById('statsBlock');
+        const arrow = document.getElementById('statsArrow');
+        const isHidden = block.style.display === 'none';
+        block.style.display = isHidden ? 'block' : 'none';
+        arrow.textContent = isHidden ? '▴' : '▾';
+        if (isHidden && !chartsLoaded) {
+            chartsLoaded = true;
+            loadCharts();
+        }
+    });
+
+    function loadCharts() {
+
+        // 1. Студенти по факультетах
+        fetch('/api/charts/studentsByFaculty').then(r => r.json()).then(data => {
+            new Chart(document.getElementById('studentsByFacultyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.faculty),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: '#534AB7',
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: grid } }
+                    }
+                }
+            });
+        });
+
+        // 2. Студенти по курсах
+        fetch('/api/charts/studentsByCourse').then(r => r.json()).then(data => {
+            new Chart(document.getElementById('studentsByCourseChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.course),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: '#7F77DD',
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: grid } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        });
+
+        // 3. Статуси заяв
+        fetch('/api/charts/applicationsByStatus').then(r => r.json()).then(data => {
+            new Chart(document.getElementById('applicationsByStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.status),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: data.map(d =>
+                            d.status === 'Відхилено'   ? '#D85A30' :
+                            d.status === 'На розгляді' ? '#AFA9EC' :
+                            '#534AB7'
+                        ),
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+
+        // 4. Заселеність кімнат
+        fetch('/api/charts/roomOccupancy').then(r => r.json()).then(data => {
+            new Chart(document.getElementById('roomOccupancyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.room),
+                    datasets: [
+                        {
+                            label: 'Зайнято',
+                            data: data.map(d => d.occupied),
+                            backgroundColor: '#534AB7',
+                            borderRadius: 4,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'Вільно',
+                            data: data.map(d => d.free),
+                            backgroundColor: '#EEEDFE',
+                            borderRadius: 4,
+                            borderSkipped: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: grid } },
+                        y: { stacked: true, grid: { display: false } }
+                    }
+                }
+            });
+        });
+    }
+</script>
+}

@@ -67,7 +67,7 @@ public async Task<JsonResult> GetStudentsByCourseAsync(CancellationToken cancell
 }
 
 // Діаграма 4: кількість документів по типах
-private record DocumentsByTypeItem(string DocumentType, int Count);
+/* private record DocumentsByTypeItem(string DocumentType, int Count);
 
 [HttpGet("documentsByType")]
 public async Task<JsonResult> GetDocumentsByTypeAsync(CancellationToken cancellationToken)
@@ -79,7 +79,7 @@ public async Task<JsonResult> GetDocumentsByTypeAsync(CancellationToken cancella
         .ToListAsync(cancellationToken);
 
     return new JsonResult(data);
-}
+} */
 
  // Діаграма 5: заселеність кімнат
 private record RoomOccupancyItem(string Room, int Occupied, int Free);

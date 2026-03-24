@@ -1,58 +1,40 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
-
+using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
     public class RoomsController : Controller
     {
         private readonly DormitoryContext _context;
+        private readonly RoomDataPortServiceFactory _roomDataPortServiceFactory;
 
         public RoomsController(DormitoryContext context)
         {
             _context = context;
+            _roomDataPortServiceFactory = new RoomDataPortServiceFactory(context);
         }
 
-        // GET: Rooms
         public async Task<IActionResult> Index()
         {
             return View(await _context.Rooms.ToListAsync());
         }
 
-        // GET: Rooms/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var room = await _context.Rooms
-                .FirstOrDefaultAsync(m => m.Roomid == id);
-            if (room == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
+            var room = await _context.Rooms.FirstOrDefaultAsync(m => m.Roomid == id);
+            if (room == null) return NotFound();
             return View(room);
         }
 
-        // GET: Rooms/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Rooms/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Roomid,Roomnumber,Floor,Capacity")] Room room)
@@ -66,33 +48,19 @@ namespace Dormitory.Web.Controllers
             return View(room);
         }
 
-        // GET: Rooms/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
             var room = await _context.Rooms.FindAsync(id);
-            if (room == null)
-            {
-                return NotFound();
-            }
+            if (room == null) return NotFound();
             return View(room);
         }
 
-        // POST: Rooms/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Roomid,Roomnumber,Floor,Capacity")] Room room)
         {
-            if (id != room.Roomid)
-            {
-                return NotFound();
-            }
+            if (id != room.Roomid) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -103,51 +71,81 @@ namespace Dormitory.Web.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!RoomExists(room.Roomid))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!RoomExists(room.Roomid)) return NotFound();
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
             return View(room);
         }
 
-        // GET: Rooms/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var room = await _context.Rooms
-                .FirstOrDefaultAsync(m => m.Roomid == id);
-            if (room == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
+            var room = await _context.Rooms.FirstOrDefaultAsync(m => m.Roomid == id);
+            if (room == null) return NotFound();
             return View(room);
         }
 
-        // POST: Rooms/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var room = await _context.Rooms.FindAsync(id);
-            if (room != null)
-            {
-                _context.Rooms.Remove(room);
-            }
-
+            if (room != null) _context.Rooms.Remove(room);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Import()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+{
+    if (fileExcel == null || fileExcel.Length == 0)
+    {
+        ModelState.AddModelError("", "Оберіть файл для завантаження");
+        return View();
+    }
+
+    const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    if (fileExcel.ContentType != xlsx)
+    {
+        ModelState.AddModelError("", "Підтримується лише формат .xlsx");
+        return View();
+    }
+
+    try
+    {
+        var importService = _roomDataPortServiceFactory.GetImportService(fileExcel.ContentType);
+        using var stream = fileExcel.OpenReadStream();
+        await importService.ImportFromStreamAsync(stream, cancellationToken);
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception)
+    {
+        ModelState.AddModelError("", "Помилка при імпорті. Перевірте що файл відповідає очікуваному формату.");
+        return View();
+    }
+}
+
+        [HttpGet]
+        public async Task<IActionResult> Export(CancellationToken cancellationToken)
+        {
+            const string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            var exportService = _roomDataPortServiceFactory.GetExportService(contentType);
+            var memoryStream = new MemoryStream();
+            await exportService.WriteToAsync(memoryStream, cancellationToken);
+            await memoryStream.FlushAsync(cancellationToken);
+            memoryStream.Position = 0;
+            return new FileStreamResult(memoryStream, contentType)
+            {
+                FileDownloadName = $"rooms_{DateTime.UtcNow:yyyy-MM-dd}.xlsx"
+            };
         }
 
         private bool RoomExists(int id)

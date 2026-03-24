@@ -21,7 +21,7 @@
             </div>
             <div class="form-group">
                 <label asp-for="Statusid" class="control-label"></label>
-                <select asp-for="Statusid" class ="form-control" asp-items="ViewBag.Statusid"></select>
+                <select asp-for="Statusid" class="form-control" asp-items="ViewBag.Statusid"></select>
             </div>
             <div class="form-group">
                 <label asp-for="Applicationtype" class="control-label"></label>
@@ -54,22 +54,19 @@
             </div>
             <div class="form-group">
                 <label asp-for="Adminid" class="control-label"></label>
-                <select asp-for="Adminid" class ="form-control" asp-items="ViewBag.Adminid"></select>
+                <select asp-for="Adminid" class="form-control" asp-items="ViewBag.Adminid"></select>
             </div>
             <div class="form-group">
                 <label asp-for="Academicperiod" class="control-label"></label>
                 <input asp-for="Academicperiod" class="form-control" />
                 <span asp-validation-for="Academicperiod" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Створити" class="btn btn-primary" />
+            <div class="d-flex gap-2 mt-3">
+                <input type="submit" value="Створити" class="btn btn-outline-primary rounded-pill" />
+                <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Назад до списку</a>
 </div>
 
 @section Scripts {

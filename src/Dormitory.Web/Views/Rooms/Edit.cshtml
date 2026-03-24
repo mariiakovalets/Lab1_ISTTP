@@ -1,12 +1,10 @@
 @model Dormitory.Domain.Entities.Room
 
 @{
-    ViewData["Title"] = "Редагування";
+    ViewData["Title"] = "Редагування кімнати";
 }
 
-<h1>Редагування</h1>
-
-<h4>Кімната</h4>
+<h1>Редагування кімнати</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
@@ -28,15 +26,12 @@
                 <input asp-for="Capacity" class="form-control" />
                 <span asp-validation-for="Capacity" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Зберегти" class="btn btn-primary" />
+            <div class="d-flex gap-2 mt-3">
+                <input type="submit" value="Зберегти" class="btn btn-outline-primary rounded-pill" />
+                <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Назад до списку</a>
 </div>
 
 @section Scripts {

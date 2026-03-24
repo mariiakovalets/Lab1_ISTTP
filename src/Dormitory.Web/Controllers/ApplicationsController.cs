@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
+using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
     public class ApplicationsController : Controller
     {
         private readonly DormitoryContext _context;
+        private readonly ApplicationDataPortServiceFactory _applicationDataPortServiceFactory;
 
         public ApplicationsController(DormitoryContext context)
         {
             _context = context;
+            _applicationDataPortServiceFactory = new ApplicationDataPortServiceFactory(context);
         }
 
         public async Task<IActionResult> Index()
@@ -278,6 +282,59 @@ namespace Dormitory.Web.Controllers
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Import()
+        {
+            return View();
+        }
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+{
+    if (fileExcel == null || fileExcel.Length == 0)
+    {
+        ModelState.AddModelError("", "Оберіть файл для завантаження");
+        return View();
+    }
+
+    const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    if (fileExcel.ContentType != xlsx)
+    {
+        ModelState.AddModelError("", "Підтримується лише формат .xlsx");
+        return View();
+    }
+
+    try
+    {
+        var importService = _applicationDataPortServiceFactory.GetImportService(fileExcel.ContentType);
+        using var stream = fileExcel.OpenReadStream();
+        await importService.ImportFromStreamAsync(stream, cancellationToken);
+        return RedirectToAction(nameof(Index));
+    }
+    catch (Exception)
+    {
+        ModelState.AddModelError("", "Помилка при імпорті. Перевірте що файл відповідає очікуваному формату.");
+        return View();
+    }
+}
+
+        [HttpGet]
+        public async Task<IActionResult> Export(CancellationToken cancellationToken)
+        {
+            const string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            var exportService = _applicationDataPortServiceFactory.GetExportService(contentType);
+
+            var memoryStream = new MemoryStream();
+            await exportService.WriteToAsync(memoryStream, cancellationToken);
+            await memoryStream.FlushAsync(cancellationToken);
+            memoryStream.Position = 0;
+
+            return new FileStreamResult(memoryStream, contentType)
+            {
+                FileDownloadName = $"applications_{DateTime.UtcNow:yyyy-MM-dd}.xlsx"
+            };
         }
 
         private void ValidateDates(Application application)

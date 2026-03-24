@@ -74,15 +74,15 @@
                 <select asp-for="Facultyid" class="form-control" asp-items="ViewBag.Facultyid"></select>
                 <span asp-validation-for="Facultyid" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Зберегти" class="btn btn-primary" />
-            </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Назад до списку</a>
+<div class="d-flex gap-2 mt-3">
+    <input type="submit" value="Зберегти" class="btn btn-outline-primary rounded-pill" />
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
+</div>
 </div>
 
 @section Scripts {

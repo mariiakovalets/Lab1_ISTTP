@@ -7,41 +7,35 @@
 <h1>Список кімнат</h1>
 
 <p>
-    <a asp-action="Create">Додати нову кімнату</a>
+    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати нову кімнату</a>
+    <a asp-action="Import" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Завантажити з файлу</a>
+    <a asp-action="Export" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Експортувати у файл</a>
 </p>
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Roomnumber)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Floor)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Capacity)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.Roomnumber)</th>
+            <th>@Html.DisplayNameFor(model => model.Floor)</th>
+            <th>@Html.DisplayNameFor(model => model.Capacity)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Roomnumber)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Floor)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Capacity)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Roomid">Редагувати</a> |
-                <a asp-action="Details" asp-route-id="@item.Roomid">Деталі</a> |
-                <a asp-action="Delete" asp-route-id="@item.Roomid">Видалити</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Roomnumber)</td>
+                <td>@Html.DisplayFor(modelItem => item.Floor)</td>
+                <td>@Html.DisplayFor(modelItem => item.Capacity)</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a asp-action="Edit" asp-route-id="@item.Roomid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
+                        <a asp-action="Details" asp-route-id="@item.Roomid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
+                        <a asp-action="Delete" asp-route-id="@item.Roomid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
+                    </div>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

@@ -4,75 +4,42 @@
     ViewData["Title"] = "Деталі";
 }
 
-<h1>Деталі</h1>
+<h1>Деталі заяви</h1>
+<hr />
 
-<div>
-    <h4>Заява</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Applicationtype)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Applicationtype)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Submissiondate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Submissiondate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Decisiondate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Decisiondate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Rejectionreason)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Rejectionreason)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Extensionstartdate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Extensionstartdate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Extensionenddate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Extensionenddate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Academicperiod)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Academicperiod)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Admin)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Admin.Username)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status.Statusname)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Student)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Student.Fullname)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Applicationid">Редагувати</a> |
-    <a asp-action="Index">Назад до списку</a>
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Applicationtype)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Applicationtype)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Submissiondate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Submissiondate)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Decisiondate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Decisiondate)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Rejectionreason)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Rejectionreason)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Extensionstartdate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Extensionstartdate)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Extensionenddate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Extensionenddate)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Academicperiod)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Academicperiod)</dd>
+
+    <dt class="col-sm-3">Статус</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Status.Statusname)</dd>
+
+    <dt class="col-sm-3">Студент</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Student.Fullname)</dd>
+
+    <dt class="col-sm-3">Адмін</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Admin.Username)</dd>
+</dl>
+
+<div class="d-flex gap-2 mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Applicationid" class="btn btn-outline-primary rounded-pill">Редагувати</a>
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
 </div>

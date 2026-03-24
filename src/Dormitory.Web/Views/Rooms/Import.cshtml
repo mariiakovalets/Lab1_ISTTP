@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Імпорт кімнат";
+}
+
+<h2>Імпорт кімнат з Excel</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data" asp-action="Import">
+    @Html.AntiForgeryToken()
+<div class="mb-3">
+    <label class="form-label">Оберіть Excel файл:</label>
+    <div class="d-flex align-items-center gap-3">
+        <label for="fileExcel" class="btn btn-outline-primary rounded-pill mb-0" style="cursor:pointer;">
+            Обрати файл
+        </label>
+        <span id="fileName" style="font-size:14px; color:#888;">Файл не обрано</span>
+    </div>
+    <input type="file" name="fileExcel" id="fileExcel" accept=".xlsx" style="display:none;" 
+           onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'Файл не обрано'" />
+</div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary rounded-pill">Завантажити</button>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Скасувати</a>
+    </div>
+</form>
+
+<div class="mt-4">
+    <h5>Очікуваний формат файлу:</h5>
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>A</th><th>B</th><th>C</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Номер кімнати</td>
+                <td>Поверх</td>
+                <td>Місткість</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

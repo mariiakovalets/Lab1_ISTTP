@@ -1,0 +1,51 @@
+@{
+    ViewData["Title"] = "Імпорт заяв";
+}
+
+<h2>Імпорт заяв з Excel</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data" asp-action="Import">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">Оберіть Excel файл:</label>
+        <input type="file" name="fileExcel" accept=".xlsx" class="form-control" />
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary rounded-pill">Завантажити</button>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Скасувати</a>
+    </div>
+</form>
+
+<div class="mt-4">
+    <h5>Очікуваний формат файлу:</h5>
+    <table class="table table-bordered table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>A</th><th>B</th><th>C</th><th>D</th>
+                <th>E</th><th>F</th><th>G</th><th>H</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Тип заяви</td>
+                <td>Дата подачі</td>
+                <td>Дата рішення</td>
+                <td>Причина відмови</td>
+                <td>Академічний період</td>
+                <td>Статус</td>
+                <td>ПІБ студента</td>
+                <td>Логін адміна</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

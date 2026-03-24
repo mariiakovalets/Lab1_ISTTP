@@ -1,36 +1,24 @@
 @model Dormitory.Domain.Entities.Room
 
 @{
-    ViewData["Title"] = "Деталі";
+    ViewData["Title"] = "Деталі кімнати";
 }
 
-<h1>Деталі</h1>
+<h1>Деталі кімнати</h1>
+<hr />
 
-<div>
-    <h4>Кімната</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Roomnumber)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Roomnumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Floor)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Floor)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Capacity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Capacity)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Roomid">Редагувати</a> |
-    <a asp-action="Index">Назад до списку</a>
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Roomnumber)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Roomnumber)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Floor)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Floor)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Capacity)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Capacity)</dd>
+</dl>
+
+<div class="d-flex gap-2 mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Roomid" class="btn btn-outline-primary rounded-pill">Редагувати</a>
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
 </div>

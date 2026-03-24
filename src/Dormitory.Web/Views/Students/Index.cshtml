@@ -7,7 +7,9 @@
 <h1>Список студентів</h1>
 
 <p>
-    <a asp-action="Create">Додати нового студента</a>
+<a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати нового студента</a>
+<a asp-action="Import" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Завантажити з файлу</a>
+<a asp-action="Export" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Експортувати у файл</a>
 </p>
 <table class="table">
     <thead>
@@ -68,11 +70,13 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Faculty.Facultyname)
             </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Studentid">Редагувати</a> |
-                <a asp-action="Details" asp-route-id="@item.Studentid">Деталі</a> |
-                <a asp-action="Delete" asp-route-id="@item.Studentid">Видалити</a>
-            </td>
+<td>
+    <div class="d-flex gap-1">
+        <a asp-action="Edit" asp-route-id="@item.Studentid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
+        <a asp-action="Details" asp-route-id="@item.Studentid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
+        <a asp-action="Delete" asp-route-id="@item.Studentid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
+    </div>
+</td>
         </tr>
 }
     </tbody>

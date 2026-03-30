@@ -18,7 +18,14 @@
     @Html.AntiForgeryToken()
     <div class="mb-3">
         <label class="form-label">Оберіть Excel файл:</label>
-        <input type="file" name="fileExcel" accept=".xlsx" class="form-control" />
+        <div class="d-flex align-items-center gap-3">
+            <label for="fileExcel" class="btn btn-outline-primary rounded-pill mb-0" style="cursor:pointer;">
+                Обрати файл
+            </label>
+            <span id="fileName" style="font-size:14px; color:#888;">Файл не обрано</span>
+        </div>
+        <input type="file" name="fileExcel" id="fileExcel" accept=".xlsx" style="display:none;"
+               onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'Файл не обрано'" />
     </div>
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-outline-primary rounded-pill">Завантажити</button>

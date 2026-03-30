@@ -7,29 +7,29 @@
 <h1>Список факультетів</h1>
 
 <p>
-    <a asp-action="Create">Додати новий факультет</a>
+    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати новий факультет</a>
 </p>
+
 <table class="table">
     <thead>
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Facultyname)
-            </th>
+            <th>@Html.DisplayNameFor(model => model.Facultyname)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Facultyname)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Facultyid">Редагувати</a> |
-                <a asp-action="Details" asp-route-id="@item.Facultyid">Деталі</a> |
-                <a asp-action="Delete" asp-route-id="@item.Facultyid">Видалити</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Facultyname)</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a asp-action="Edit" asp-route-id="@item.Facultyid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
+                        <a asp-action="Details" asp-route-id="@item.Facultyid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
+                        <a asp-action="Delete" asp-route-id="@item.Facultyid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
+                    </div>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

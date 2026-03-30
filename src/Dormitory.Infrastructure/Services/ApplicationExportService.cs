@@ -27,6 +27,7 @@ public class ApplicationExportService : IExportService<Application>
             throw new ArgumentException("Потік не підтримує запис", nameof(stream));
 
         var applications = await _context.Applications
+            .AsNoTracking()
             .Include(a => a.Student)
             .Include(a => a.Status)
             .Include(a => a.Admin)
@@ -54,8 +55,8 @@ public class ApplicationExportService : IExportService<Application>
     private static void WriteApplication(IXLWorksheet worksheet, Application app, int rowIndex)
     {
         worksheet.Cell(rowIndex, 1).Value = app.Applicationtype ?? "";
-        worksheet.Cell(rowIndex, 2).Value = app.Submissiondate?.ToString("yyyy-MM-dd HH:mm") ?? "";
-        worksheet.Cell(rowIndex, 3).Value = app.Decisiondate?.ToString("yyyy-MM-dd HH:mm") ?? "";
+        worksheet.Cell(rowIndex, 2).Value = app.Submissiondate?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
+        worksheet.Cell(rowIndex, 3).Value = app.Decisiondate?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
         worksheet.Cell(rowIndex, 4).Value = app.Rejectionreason ?? "";
         worksheet.Cell(rowIndex, 5).Value = app.Academicperiod ?? "";
         worksheet.Cell(rowIndex, 6).Value = app.Status?.Statusname ?? "";

@@ -5,42 +5,43 @@
 }
 
 <h1>Створення</h1>
-
 <h4>Документ</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="All" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="Studentid" class="control-label"></label>
-                <select asp-for="Studentid" class ="form-control" asp-items="ViewBag.Studentid"></select>
+                <select asp-for="Studentid" class="form-control" asp-items="ViewBag.Studentid"></select>
+                <span asp-validation-for="Studentid" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Typeid" class="control-label"></label>
-                <select asp-for="Typeid" class ="form-control" asp-items="ViewBag.Typeid"></select>
+                <select asp-for="Typeid" class="form-control" asp-items="ViewBag.Typeid"></select>
+                <span asp-validation-for="Typeid" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Filecontent" class="control-label"></label>
                 <input type="file" name="uploadedFile" class="form-control" />
+                <span asp-validation-for="Filecontent" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Issuedate" class="control-label"></label>
                 <input asp-for="Issuedate" class="form-control" />
+                <span asp-validation-for="Issuedate" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Expirydate" class="control-label"></label>
                 <input asp-for="Expirydate" class="form-control" />
+                <span asp-validation-for="Expirydate" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Створити" class="btn btn-primary" />
+            <div class="d-flex gap-2 mt-3">
+                <input type="submit" value="Створити" class="btn btn-outline-primary rounded-pill" />
+                <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Назад до списку</a>
 </div>
 
 @section Scripts {

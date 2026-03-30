@@ -4,27 +4,18 @@
     ViewData["Title"] = "Деталі";
 }
 
-<h1>Деталі</h1>
+<h1>Деталі адміністратора</h1>
+<hr />
 
-<div>
-    <h4>Адміністратор</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Username)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Username)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Fullname)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Fullname)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Adminid">Редагувати</a> |
-    <a asp-action="Index">Назад до списку</a>
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Username)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Username)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Fullname)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Fullname)</dd>
+</dl>
+
+<div class="d-flex gap-2 mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Adminid" class="btn btn-outline-primary rounded-pill">Редагувати</a>
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
 </div>

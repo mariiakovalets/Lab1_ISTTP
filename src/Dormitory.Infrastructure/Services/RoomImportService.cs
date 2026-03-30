@@ -14,52 +14,67 @@ public class RoomImportService : IImportService<Room>
         _context = context;
     }
 
-public async Task ImportFromStreamAsync(Stream stream, CancellationToken cancellationToken)
-{
-    if (!stream.CanRead)
-        throw new ArgumentException("Дані не можуть бути прочитані", nameof(stream));
-
-    using var workbook = new XLWorkbook(stream);
-    var worksheet = workbook.Worksheets.First();
-
-    using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-    try
+    public async Task ImportFromStreamAsync(Stream stream, CancellationToken cancellationToken)
     {
-        foreach (var row in worksheet.RowsUsed().Skip(1))
-            await AddOrUpdateRoomAsync(row, cancellationToken);
+        if (!stream.CanRead)
+            throw new ArgumentException("Дані не можуть бути прочитані", nameof(stream));
 
-        await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        using var workbook = new XLWorkbook(stream);
+        var worksheet = workbook.Worksheets.First();
+
+        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            foreach (var row in worksheet.RowsUsed().Skip(1))
+                await AddOrUpdateRoomAsync(row, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
-    catch
-    {
-        await transaction.RollbackAsync(cancellationToken);
-        throw;
-    }
-}
 
     private async Task AddOrUpdateRoomAsync(IXLRow row, CancellationToken cancellationToken)
     {
         var roomNumber = row.Cell(1).Value.ToString().Trim();
-        if (string.IsNullOrWhiteSpace(roomNumber)) return;
+
+        if (string.IsNullOrWhiteSpace(roomNumber))
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Номер кімнати є обов'язковим");
+
+        if (roomNumber.Length > 20)
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Номер кімнати не може бути довшим за 20 символів");
+
+        var floor = GetFloor(row);
+        if (floor == null)
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Поверх є обов'язковим і має бути числом");
+        if (floor < 1 || floor > 30)
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Поверх має бути від 1 до 30");
+
+        var capacity = GetCapacity(row);
+        if (capacity == null)
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Місткість є обов'язковою і має бути числом");
+        if (capacity < 2 || capacity > 3)
+            throw new InvalidOperationException($"Рядок {row.RowNumber()}: Місткість має бути від 2 до 3");
 
         var existing = await _context.Rooms
             .FirstOrDefaultAsync(r => r.Roomnumber == roomNumber, cancellationToken);
 
         if (existing != null)
         {
-            // Кімната вже є — оновлюємо поверх і місткість
-            existing.Floor    = GetFloor(row);
-            existing.Capacity = GetCapacity(row);
+            existing.Floor    = floor;
+            existing.Capacity = capacity;
         }
         else
         {
-            // Нова кімната — додаємо
             _context.Rooms.Add(new Room
             {
                 Roomnumber = roomNumber,
-                Floor      = GetFloor(row),
-                Capacity   = GetCapacity(row)
+                Floor      = floor,
+                Capacity   = capacity
             });
         }
     }

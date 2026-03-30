@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
@@ -60,7 +59,6 @@ namespace Dormitory.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Applicationid,Studentid,Statusid,Applicationtype,Submissiondate,Decisiondate,Rejectionreason,Extensionstartdate,Extensionenddate,Adminid,Academicperiod")] Application application)
         {
-            // Перевірка чи студент вже заселений
             if (application.Applicationtype == "Поселення")
             {
                 var alreadySettled = await _context.Residencehistories
@@ -102,7 +100,6 @@ namespace Dormitory.Web.Controllers
         {
             if (id != application.Applicationid) return NotFound();
 
-            // Перевірка чи студент вже має активну заяву на поселення (крім поточної)
             if (application.Applicationtype == "Поселення")
             {
                 var alreadySettled = await _context.Residencehistories
@@ -128,7 +125,6 @@ namespace Dormitory.Web.Controllers
                     _context.Update(application);
                     await _context.SaveChangesAsync();
 
-                    // Якщо заяву відхилено — видаляємо з черги
                     if (application.Statusid == 3)
                     {
                         var queueEntry = await _context.Queues
@@ -138,7 +134,6 @@ namespace Dormitory.Web.Controllers
                             _context.Queues.Remove(queueEntry);
                             await _context.SaveChangesAsync();
 
-                            // Перераховуємо позиції
                             var remaining = await _context.Queues.OrderBy(q => q.Position).ToListAsync();
                             for (int i = 0; i < remaining.Count; i++)
                                 remaining[i].Position = i + 1;
@@ -146,7 +141,6 @@ namespace Dormitory.Web.Controllers
                         }
                     }
 
-                    // Логіка при схваленні заяви на поселення
                     if (application.Statusid == 2 && application.Applicationtype == "Поселення")
                     {
                         var alreadyInQueue = await _context.Queues
@@ -185,6 +179,11 @@ namespace Dormitory.Web.Controllers
             var student = await _context.Students.FindAsync(application.Studentid);
             if (student == null) return false;
 
+            // Перевіряємо чи студент вже не заселений
+            var alreadySettled = await _context.Residencehistories
+                .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
+            if (alreadySettled) return true;
+
             var rooms = await _context.Rooms.ToListAsync();
 
             foreach (var room in rooms)
@@ -194,9 +193,7 @@ namespace Dormitory.Web.Controllers
                     .Where(r => r.Roomid == room.Roomid && r.Checkoutdate == null)
                     .ToListAsync();
 
-                var occupiedSpaces = currentResidents.Count;
-
-                if (occupiedSpaces >= room.Capacity) continue;
+                if (currentResidents.Count >= room.Capacity) continue;
 
                 if (currentResidents.Any())
                 {
@@ -204,11 +201,10 @@ namespace Dormitory.Web.Controllers
                     if (roomGender != student.Gender) continue;
                 }
 
-                // Заселяємо!
                 _context.Residencehistories.Add(new Residencehistory
                 {
-                    Studentid = application.Studentid,
-                    Roomid = room.Roomid,
+                    Studentid   = application.Studentid,
+                    Roomid      = room.Roomid,
                     Checkindate = DateTime.Today
                 });
                 await _context.SaveChangesAsync();
@@ -220,7 +216,6 @@ namespace Dormitory.Web.Controllers
 
         private async Task RecalculateQueuePositions(int newApplicationId, Student? newStudent)
         {
-            // Завантажуємо студента свіжо з БД щоб мати всі поля
             if (newStudent?.Studentid != null)
                 newStudent = await _context.Students.FindAsync(newStudent.Studentid);
 
@@ -289,36 +284,43 @@ namespace Dormitory.Web.Controllers
             return View();
         }
 
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
-{
-    if (fileExcel == null || fileExcel.Length == 0)
-    {
-        ModelState.AddModelError("", "Оберіть файл для завантаження");
-        return View();
-    }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+        {
+            ModelState.Remove("fileExcel");
 
-    const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    if (fileExcel.ContentType != xlsx)
-    {
-        ModelState.AddModelError("", "Підтримується лише формат .xlsx");
-        return View();
-    }
+            if (fileExcel == null || fileExcel.Length == 0)
+            {
+                ModelState.AddModelError("", "Оберіть файл для завантаження");
+                return View();
+            }
 
-    try
-    {
-        var importService = _applicationDataPortServiceFactory.GetImportService(fileExcel.ContentType);
-        using var stream = fileExcel.OpenReadStream();
-        await importService.ImportFromStreamAsync(stream, cancellationToken);
-        return RedirectToAction(nameof(Index));
-    }
-    catch (Exception)
-    {
-        ModelState.AddModelError("", "Помилка при імпорті. Перевірте що файл відповідає очікуваному формату.");
-        return View();
-    }
-}
+            const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            if (fileExcel.ContentType != xlsx)
+            {
+                ModelState.AddModelError("", "Підтримується лише формат .xlsx");
+                return View();
+            }
+
+            try
+            {
+                var importService = _applicationDataPortServiceFactory.GetImportService(fileExcel.ContentType);
+                using var stream = fileExcel.OpenReadStream();
+                await importService.ImportFromStreamAsync(stream, cancellationToken);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View();
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
+                return View();
+            }
+        }
 
         [HttpGet]
         public async Task<IActionResult> Export(CancellationToken cancellationToken)
@@ -333,7 +335,7 @@ public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken c
 
             return new FileStreamResult(memoryStream, contentType)
             {
-                FileDownloadName = $"applications_{DateTime.UtcNow:yyyy-MM-dd}.xlsx"
+                FileDownloadName = "applications_export.xlsx"
             };
         }
 

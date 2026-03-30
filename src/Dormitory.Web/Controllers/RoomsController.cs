@@ -106,6 +106,7 @@ namespace Dormitory.Web.Controllers
         [ValidateAntiForgeryToken]
 public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
 {
+    ModelState.Remove("fileExcel");
     if (fileExcel == null || fileExcel.Length == 0)
     {
         ModelState.AddModelError("", "Оберіть файл для завантаження");
@@ -126,9 +127,14 @@ public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken c
         await importService.ImportFromStreamAsync(stream, cancellationToken);
         return RedirectToAction(nameof(Index));
     }
+    catch (InvalidOperationException ex)
+    {
+        ModelState.AddModelError("", ex.Message);
+        return View();
+    }
     catch (Exception)
     {
-        ModelState.AddModelError("", "Помилка при імпорті. Перевірте що файл відповідає очікуваному формату.");
+        ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
         return View();
     }
 }
@@ -144,7 +150,7 @@ public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken c
             memoryStream.Position = 0;
             return new FileStreamResult(memoryStream, contentType)
             {
-                FileDownloadName = $"rooms_{DateTime.UtcNow:yyyy-MM-dd}.xlsx"
+                FileDownloadName = "rooms_export.xlsx"
             };
         }
 

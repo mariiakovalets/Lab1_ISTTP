@@ -4,39 +4,24 @@
     ViewData["Title"] = "Деталі";
 }
 
-<h1>Деталі</h1>
+<h1>Деталі запису</h1>
+<hr />
 
-<div>
-    <h4>Історія проживання</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Checkindate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Checkindate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Checkoutdate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Checkoutdate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Room)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Room.Roomnumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Student)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Student.Fullname)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Historyid">Редагувати</a> |
-    <a asp-action="Index">Назад до списку</a>
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Student)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Student.Fullname)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Room)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Room.Roomnumber)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Checkindate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Checkindate)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Checkoutdate)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Checkoutdate)</dd>
+</dl>
+
+<div class="d-flex gap-2 mt-3">
+    <a asp-action="Edit" asp-route-id="@Model?.Historyid" class="btn btn-outline-primary rounded-pill">Редагувати</a>
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
 </div>

@@ -13,5 +13,7 @@ public partial class DocumentType
 
     public bool IsLifetime { get; set; }
 
+    public bool IsPrivilegeDoc { get; set; }
+
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 }

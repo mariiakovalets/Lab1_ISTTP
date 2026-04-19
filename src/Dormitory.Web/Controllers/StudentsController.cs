@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
@@ -11,6 +12,7 @@ using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class StudentsController : Controller
     {
         private readonly DormitoryContext _context;
@@ -22,14 +24,12 @@ namespace Dormitory.Web.Controllers
             _studentDataPortServiceFactory = new StudentDataPortServiceFactory(context);
         }
 
-        // GET: Students
         public async Task<IActionResult> Index()
         {
             var dormitoryContext = _context.Students.Include(s => s.Faculty);
             return View(await dormitoryContext.ToListAsync());
         }
 
-        // GET: Students/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -43,19 +43,16 @@ namespace Dormitory.Web.Controllers
             return View(student);
         }
 
-        // GET: Students/Create
         public IActionResult Create()
         {
             ViewData["Facultyid"] = new SelectList(_context.Faculties, "Facultyid", "Facultyname");
             return View();
         }
 
-        // POST: Students/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm,HasPrivilege")] Student student)
         {
-            // Нормалізуємо телефон перед валідацією
             if (!string.IsNullOrEmpty(student.Phone))
             {
                 student.Phone = student.Phone
@@ -90,7 +87,6 @@ namespace Dormitory.Web.Controllers
             return View(student);
         }
 
-        // GET: Students/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -102,14 +98,12 @@ namespace Dormitory.Web.Controllers
             return View(student);
         }
 
-        // POST: Students/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Studentid,Fullname,Course,Birthdate,Address,Email,Gender,Facultyid,Phone,DistanceKm,HasPrivilege")] Student student)
         {
             if (id != student.Studentid) return NotFound();
 
-            // Нормалізуємо телефон перед валідацією
             if (!string.IsNullOrEmpty(student.Phone))
             {
                 student.Phone = student.Phone
@@ -154,7 +148,6 @@ namespace Dormitory.Web.Controllers
             return View(student);
         }
 
-        // GET: Students/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -168,67 +161,61 @@ namespace Dormitory.Web.Controllers
             return View(student);
         }
 
-        // POST: Students/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var student = await _context.Students.FindAsync(id);
             if (student != null)
-            {
                 _context.Students.Remove(student);
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Students/Import
         public IActionResult Import()
         {
             return View();
         }
 
-        // POST: Students/Import
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
-{
-    ModelState.Remove("fileExcel");
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+        {
+            ModelState.Remove("fileExcel");
 
-    if (fileExcel == null || fileExcel.Length == 0)
-    {
-        ModelState.AddModelError("", "Оберіть файл для завантаження");
-        return View();
-    }
+            if (fileExcel == null || fileExcel.Length == 0)
+            {
+                ModelState.AddModelError("", "Оберіть файл для завантаження");
+                return View();
+            }
 
-    const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    if (fileExcel.ContentType != xlsx)
-    {
-        ModelState.AddModelError("", "Підтримується лише формат .xlsx");
-        return View();
-    }
+            const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            if (fileExcel.ContentType != xlsx)
+            {
+                ModelState.AddModelError("", "Підтримується лише формат .xlsx");
+                return View();
+            }
 
-    try
-    {
-        var importService = _studentDataPortServiceFactory.GetImportService(fileExcel.ContentType);
-        using var stream = fileExcel.OpenReadStream();
-        await importService.ImportFromStreamAsync(stream, cancellationToken);
-        return RedirectToAction(nameof(Index));
-    }
-    catch (InvalidOperationException ex)
-{
-    ModelState.AddModelError("", ex.Message);
-    return View();
-}
-catch (Exception)
-{
-    ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
-    return View();
-}
-}
+            try
+            {
+                var importService = _studentDataPortServiceFactory.GetImportService(fileExcel.ContentType);
+                using var stream = fileExcel.OpenReadStream();
+                await importService.ImportFromStreamAsync(stream, cancellationToken);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View();
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
+                return View();
+            }
+        }
 
-        // GET: Students/Export
         [HttpGet]
         public async Task<IActionResult> Export(CancellationToken cancellationToken)
         {

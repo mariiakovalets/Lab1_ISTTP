@@ -1,0 +1,253 @@
+@{
+    ViewData["Title"] = "Подати заяву";
+    bool isSettled = ViewBag.IsSettled ?? false;
+    bool hasPrivilege = ViewBag.HasPrivilege;
+    var uploadedDocs = ViewBag.UploadedDocs as List<Dormitory.Domain.Entities.Document> ?? new();
+    var requiredTypes = ViewBag.RequiredTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
+    var missingTypes = ViewBag.MissingTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
+    var missingMandatory = ViewBag.MissingMandatory as List<string> ?? new();
+    var expiredDocs = ViewBag.ExpiredDocs as List<string> ?? new();
+    var typesJson = ViewBag.TypesJson as string ?? "[]";
+    var uploadedTypeIds = uploadedDocs.Select(d => d.Typeid).ToHashSet();
+
+    // Розділяємо типи на звичайні та пільгові
+    var regularTypes = requiredTypes.Where(t => !t.IsPrivilegeDoc).ToList();
+    var privilegeTypes = requiredTypes.Where(t => t.IsPrivilegeDoc).ToList();
+    var hasAnyPrivilegeDoc = uploadedDocs.Any(d => privilegeTypes.Any(pt => pt.Typeid == d.Typeid));
+    var missingPrivilegeTypes = privilegeTypes.Where(t => !uploadedTypeIds.Contains(t.Typeid)).ToList();
+
+    bool canSubmit = !missingMandatory.Any() && !expiredDocs.Any()
+        && (!hasPrivilege || hasAnyPrivilegeDoc);
+}
+
+<h2>Подати заяву</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning mt-3">@TempData["Error"]</div>
+}
+
+<div class="row mt-3">
+    @* ---- ЛІВА КОЛОНКА: документи ---- *@
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Документи</h5>
+
+                @if (expiredDocs.Any())
+                {
+                    <div class="alert alert-danger py-2">
+                        <strong>Прострочені:</strong> @string.Join(", ", expiredDocs) — оновіть перед подачею
+                    </div>
+                }
+
+                <table class="table table-sm mt-2 mb-0">
+                    <thead><tr><th>Документ</th><th>Статус</th></tr></thead>
+                    <tbody>
+                        @foreach (var type in regularTypes)
+                        {
+                            var doc = uploadedDocs.FirstOrDefault(d => d.Typeid == type.Typeid);
+                            var isExpired = doc?.Expirydate.HasValue == true && doc.Expirydate.Value < DateTime.Today;
+                            <tr>
+                                <td>@type.Typename</td>
+                                <td>
+                                    @if (doc != null && !isExpired)
+                                    { <span class="text-success">✅</span> }
+                                    else if (doc != null && isExpired)
+                                    { <span class="text-danger">⚠️ Прострочений</span> }
+                                    else
+                                    { <span class="text-danger">❌</span> }
+                                </td>
+                            </tr>
+                        }
+                        @* Пільга — одним рядком *@
+                        @if (hasPrivilege)
+                        {
+                            <tr>
+                                <td>Пільговий документ</td>
+                                <td>
+                                    @if (hasAnyPrivilegeDoc)
+                                    {
+                                        var privDoc = uploadedDocs.First(d => privilegeTypes.Any(pt => pt.Typeid == d.Typeid));
+                                        var privType = privilegeTypes.First(pt => pt.Typeid == privDoc.Typeid);
+                                        <span class="text-success">✅ @privType.Typename</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">❌</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @if (missingMandatory.Any())
+                {
+                    <div class="alert alert-warning py-2 mt-2 mb-0">
+                        Обов'язкові: @string.Join(", ", missingMandatory)
+                    </div>
+                }
+
+                @* ---- Завантаження документа ---- *@
+                @{
+                    // Для звичайних — тільки відсутні, для пільгових — всі відсутні в один dropdown
+                    var regularMissing = missingTypes.Where(t => !t.IsPrivilegeDoc).ToList();
+                    bool showUploadForm = regularMissing.Any() || (hasPrivilege && !hasAnyPrivilegeDoc && missingPrivilegeTypes.Any());
+                }
+
+                @if (showUploadForm)
+                {
+                    <hr class="my-2" />
+                    <h6>Завантажити документ</h6>
+                    <form asp-action="UploadDocumentInline" method="post" enctype="multipart/form-data">
+                        <div class="form-group mb-2">
+                            <select name="typeid" id="typeidSelect" class="form-control form-control-sm">
+                                <option value="">Оберіть тип</option>
+                                @foreach (var t in regularMissing)
+                                {
+                                    <option value="@t.Typeid">@t.Typename</option>
+                                }
+                                @if (hasPrivilege && !hasAnyPrivilegeDoc)
+                                {
+                                    <optgroup label="Пільговий документ (оберіть один)">
+                                        @foreach (var t in missingPrivilegeTypes)
+                                        {
+                                            <option value="@t.Typeid">@t.Typename</option>
+                                        }
+                                    </optgroup>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group mb-2" id="issuedateGroup" style="display:none;">
+                            <label class="form-label mb-0">Дата видачі</label>
+                            <input name="issuedate" id="issuedate" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="form-group mb-2" id="expirydateGroup" style="display:none;">
+                            <label class="form-label mb-0">Дата закінчення дії</label>
+                            <input name="expirydate" id="expirydate" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="form-group mb-2">
+                            <input name="uploadedFile" type="file" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png" />
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill">Завантажити</button>
+                    </form>
+                }
+                else if (!missingTypes.Any())
+                {
+                    <div class="alert alert-success py-2 mt-2 mb-0">Всі документи на місці!</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ---- ПРАВА КОЛОНКА: заява ---- *@
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Заява</h5>
+
+                <form asp-action="StudentCreate" method="post">
+                    <div class="form-group mb-3">
+                        <label class="control-label">Тип заяви</label>
+                        <select name="applicationtype" class="form-control">
+                            @if (!isSettled)
+                            {
+                                <option value="Поселення" selected>Поселення</option>
+                            }
+                            @if (isSettled)
+                            {
+                                <option value="Пролонгація" selected>Пролонгація</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Академічний період</label>
+                        <input name="academicperiod" class="form-control" placeholder="напр. 2025/2026-2" />
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-outline-primary rounded-pill"
+                                @(canSubmit ? "" : "disabled")>
+                            Подати заяву
+                        </button>
+                        <a asp-action="MyApplications" class="btn btn-outline-secondary rounded-pill">Назад</a>
+                    </div>
+
+                    @if (!canSubmit)
+                    {
+                        <small class="text-danger mt-2 d-block">
+                            @if (missingMandatory.Any())
+                            {
+                                @:Завантажте обов'язкові документи
+                            }
+                            else if (expiredDocs.Any())
+                            {
+                                @:Оновіть прострочені документи
+                            }
+                            else if (hasPrivilege && !hasAnyPrivilegeDoc)
+                            {
+                                @:Завантажте документ, що підтверджує пільгу
+                            }
+                        </small>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const types = @Html.Raw(typesJson);
+        const sel = document.getElementById('typeidSelect');
+        const ig = document.getElementById('issuedateGroup');
+        const eg = document.getElementById('expirydateGroup');
+        const issueInput = document.getElementById('issuedate');
+        const expiryInput = document.getElementById('expirydate');
+
+        if (sel) {
+            sel.addEventListener('change', function() {
+                const typeId = parseInt(this.value);
+                const type = types.find(t => t.Typeid === typeId);
+
+                if (!type) {
+                    if(ig) ig.style.display = 'none';
+                    if(eg) eg.style.display = 'none';
+                    return;
+                }
+
+                if(ig) ig.style.display = type.RequiresIssueDate ? 'block' : 'none';
+                if(eg) eg.style.display = !type.IsLifetime ? 'block' : 'none';
+
+                // Скидаємо значення при зміні типу
+                if(issueInput) issueInput.value = '';
+                if(expiryInput) expiryInput.value = '';
+            });
+        }
+
+        // Автоматичне заповнення дати закінчення для Флюорографії (+1 рік)
+        if (issueInput && expiryInput) {
+            issueInput.addEventListener('change', function() {
+                const typeId = parseInt(sel?.value);
+                const type = types.find(t => t.Typeid === typeId);
+
+                if (type && type.Typename === 'Флюорографія' && this.value) {
+                    const issueDate = new Date(this.value);
+                    const expiryDate = new Date(issueDate);
+                    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+                    const year = expiryDate.getFullYear();
+                    const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(expiryDate.getDate()).padStart(2, '0');
+                    expiryInput.value = `${year}-${month}-${day}`;
+                }
+            });
+        }
+    </script>
+}

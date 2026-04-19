@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Моя черга";
+}
+
+<h2>Моя позиція в черзі</h2>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">@ViewBag.Message</div>
+}
+
+@if (ViewBag.Position != null)
+{
+    <div class="card mt-3" style="max-width: 400px;">
+        <div class="card-body text-center">
+            <h1 class="display-3" style="color: #534AB7;">@ViewBag.Position</h1>
+            <p class="text-muted">ваша позиція з @ViewBag.Total</p>
+        </div>
+    </div>
+}
+
+<a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary rounded-pill mt-3">На головну</a>

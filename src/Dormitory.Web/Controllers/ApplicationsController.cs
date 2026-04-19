@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
@@ -11,42 +13,43 @@ using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
+    [Authorize]
     public class ApplicationsController : Controller
     {
         private readonly DormitoryContext _context;
         private readonly ApplicationDataPortServiceFactory _applicationDataPortServiceFactory;
+        private readonly UserManager<User> _userManager;
 
-        public ApplicationsController(DormitoryContext context)
+        public ApplicationsController(DormitoryContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
             _applicationDataPortServiceFactory = new ApplicationDataPortServiceFactory(context);
         }
 
+        // ============ ADMIN ============
+
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Index()
         {
-            var dormitoryContext = _context.Applications
-                .AsNoTracking()
-                .Include(a => a.Admin)
-                .Include(a => a.Status)
-                .Include(a => a.Student)
+            var apps = _context.Applications.AsNoTracking()
+                .Include(a => a.Admin).Include(a => a.Status).Include(a => a.Student)
                 .OrderByDescending(a => a.Submissiondate);
-            return View(await dormitoryContext.ToListAsync());
+            return View(await apps.ToListAsync());
         }
 
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
-            var application = await _context.Applications
-                .Include(a => a.Admin)
-                .Include(a => a.Status)
-                .Include(a => a.Student)
+            var app = await _context.Applications
+                .Include(a => a.Admin).Include(a => a.Status).Include(a => a.Student)
                 .FirstOrDefaultAsync(m => m.Applicationid == id);
-
-            if (application == null) return NotFound();
-            return View(application);
+            if (app == null) return NotFound();
+            return View(app);
         }
 
+        [Authorize(Roles = "admin")]
         public IActionResult Create()
         {
             ViewData["Adminid"] = new SelectList(_context.Administrators, "Adminid", "Username");
@@ -55,20 +58,15 @@ namespace Dormitory.Web.Controllers
             return View();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "admin")]
         public async Task<IActionResult> Create([Bind("Applicationid,Studentid,Statusid,Applicationtype,Submissiondate,Decisiondate,Rejectionreason,Extensionstartdate,Extensionenddate,Adminid,Academicperiod")] Application application)
         {
             if (application.Applicationtype == "Поселення")
             {
-                var alreadySettled = await _context.Residencehistories
-                    .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
-                if (alreadySettled)
-                    ModelState.AddModelError("Studentid", "Цей студент вже заселений!");
+                var settled = await _context.Residencehistories.AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
+                if (settled) ModelState.AddModelError("Studentid", "Цей студент вже заселений!");
             }
-
             ValidateDates(application);
-
             if (ModelState.IsValid)
             {
                 _context.Add(application);
@@ -81,91 +79,51 @@ namespace Dormitory.Web.Controllers
             return View(application);
         }
 
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
-            var application = await _context.Applications.FindAsync(id);
-            if (application == null) return NotFound();
-
-            ViewData["Adminid"] = new SelectList(_context.Administrators, "Adminid", "Username", application.Adminid);
-            ViewData["Statusid"] = new SelectList(_context.Applicationstatuses, "Statusid", "Statusname", application.Statusid);
-            ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", application.Studentid);
-            return View(application);
+            var app = await _context.Applications.FindAsync(id);
+            if (app == null) return NotFound();
+            ViewData["Adminid"] = new SelectList(_context.Administrators, "Adminid", "Username", app.Adminid);
+            ViewData["Statusid"] = new SelectList(_context.Applicationstatuses, "Statusid", "Statusname", app.Statusid);
+            ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", app.Studentid);
+            return View(app);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Applicationid,Studentid,Statusid,Applicationtype,Submissiondate,Decisiondate,Rejectionreason,Extensionstartdate,Extensionenddate,Adminid,Academicperiod")] Application application)
         {
             if (id != application.Applicationid) return NotFound();
-
             if (application.Applicationtype == "Поселення")
             {
-                var alreadySettled = await _context.Residencehistories
-                    .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
-                if (alreadySettled)
+                if (await _context.Residencehistories.AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null))
                     ModelState.AddModelError("Studentid", "Цей студент вже заселений!");
-
-                var duplicateApplication = await _context.Applications
-                    .AnyAsync(a => a.Studentid == application.Studentid
-                                && a.Applicationtype == "Поселення"
-                                && a.Applicationid != application.Applicationid
-                                && a.Decisiondate == null);
-                if (duplicateApplication)
-                    ModelState.AddModelError("Studentid", "Цей студент вже має активну заяву на поселення!");
+                if (await _context.Applications.AnyAsync(a => a.Studentid == application.Studentid && a.Applicationtype == "Поселення" && a.Applicationid != application.Applicationid && a.Decisiondate == null))
+                    ModelState.AddModelError("Studentid", "Активна заява вже є!");
             }
-
             ValidateDates(application);
-
             if (ModelState.IsValid)
             {
                 try
                 {
                     _context.Update(application);
                     await _context.SaveChangesAsync();
-
                     if (application.Statusid == 3)
                     {
-                        var queueEntry = await _context.Queues
-                            .FirstOrDefaultAsync(q => q.Applicationid == application.Applicationid);
-                        if (queueEntry != null)
-                        {
-                            _context.Queues.Remove(queueEntry);
-                            await _context.SaveChangesAsync();
-
-                            var remaining = await _context.Queues.OrderBy(q => q.Position).ToListAsync();
-                            for (int i = 0; i < remaining.Count; i++)
-                                remaining[i].Position = i + 1;
-                            await _context.SaveChangesAsync();
-                        }
+                        var qe = await _context.Queues.FirstOrDefaultAsync(q => q.Applicationid == application.Applicationid);
+                        if (qe != null) { _context.Queues.Remove(qe); await _context.SaveChangesAsync(); var rem = await _context.Queues.OrderBy(q => q.Position).ToListAsync(); for (int i = 0; i < rem.Count; i++) rem[i].Position = i + 1; await _context.SaveChangesAsync(); }
                     }
-
                     if (application.Statusid == 2 && application.Applicationtype == "Поселення")
                     {
-                        var alreadyInQueue = await _context.Queues
-                            .AnyAsync(q => q.Applicationid == application.Applicationid);
-                        var alreadySettled = await _context.Residencehistories
-                            .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
-
-                        if (!alreadyInQueue && !alreadySettled)
+                        if (!await _context.Queues.AnyAsync(q => q.Applicationid == application.Applicationid) && !await _context.Residencehistories.AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null))
                         {
-                            var assigned = await TryAssignRoom(application);
-                            if (!assigned)
-                            {
-                                var student = await _context.Students.FindAsync(application.Studentid);
-                                await RecalculateQueuePositions(application.Applicationid, student);
-                            }
+                            if (!await TryAssignRoom(application))
+                            { var s = await _context.Students.FindAsync(application.Studentid); await RecalculateQueuePositions(application.Applicationid, s); }
                         }
                     }
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ApplicationExists(application.Applicationid))
-                        return NotFound();
-                    else
-                        throw;
-                }
+                catch (DbUpdateConcurrencyException) { if (!ApplicationExists(application.Applicationid)) return NotFound(); else throw; }
                 return RedirectToAction(nameof(Index));
             }
             ViewData["Adminid"] = new SelectList(_context.Administrators, "Adminid", "Username", application.Adminid);
@@ -174,201 +132,337 @@ namespace Dormitory.Web.Controllers
             return View(application);
         }
 
-        private async Task<bool> TryAssignRoom(Application application)
-        {
-            var student = await _context.Students.FindAsync(application.Studentid);
-            if (student == null) return false;
-
-            // Перевіряємо чи студент вже не заселений
-            var alreadySettled = await _context.Residencehistories
-                .AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null);
-            if (alreadySettled) return true;
-
-            var rooms = await _context.Rooms.ToListAsync();
-
-            foreach (var room in rooms)
-            {
-                var currentResidents = await _context.Residencehistories
-                    .Include(r => r.Student)
-                    .Where(r => r.Roomid == room.Roomid && r.Checkoutdate == null)
-                    .ToListAsync();
-
-                if (currentResidents.Count >= room.Capacity) continue;
-
-                if (currentResidents.Any())
-                {
-                    var roomGender = currentResidents.First().Student?.Gender;
-                    if (roomGender != student.Gender) continue;
-                }
-
-                _context.Residencehistories.Add(new Residencehistory
-                {
-                    Studentid   = application.Studentid,
-                    Roomid      = room.Roomid,
-                    Checkindate = DateTime.Today
-                });
-                await _context.SaveChangesAsync();
-                return true;
-            }
-
-            return false;
-        }
-
-        private async Task RecalculateQueuePositions(int newApplicationId, Student? newStudent)
-        {
-            if (newStudent?.Studentid != null)
-                newStudent = await _context.Students.FindAsync(newStudent.Studentid);
-
-            var queueEntries = await _context.Queues
-                .Include(q => q.Application)
-                    .ThenInclude(a => a!.Student)
-                .ToListAsync();
-
-            queueEntries.Add(new Queue
-            {
-                Applicationid = newApplicationId,
-                Application = new Application
-                {
-                    Applicationid = newApplicationId,
-                    Student = newStudent
-                }
-            });
-
-            var sorted = queueEntries
-                .OrderByDescending(q => q.Application?.Student?.HasPrivilege ?? false)
-                .ThenByDescending(q => q.Application?.Student?.DistanceKm ?? 0)
-                .ToList();
-
-            _context.Queues.RemoveRange(await _context.Queues.ToListAsync());
-
-            for (int i = 0; i < sorted.Count; i++)
-            {
-                _context.Queues.Add(new Queue
-                {
-                    Applicationid = sorted[i].Applicationid,
-                    Position = i + 1
-                });
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-
-            var application = await _context.Applications
-                .Include(a => a.Admin)
-                .Include(a => a.Status)
-                .Include(a => a.Student)
-                .FirstOrDefaultAsync(m => m.Applicationid == id);
-
-            if (application == null) return NotFound();
-            return View(application);
+            var app = await _context.Applications.Include(a => a.Admin).Include(a => a.Status).Include(a => a.Student).FirstOrDefaultAsync(m => m.Applicationid == id);
+            if (app == null) return NotFound();
+            return View(app);
         }
 
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken, Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var application = await _context.Applications.FindAsync(id);
-            if (application != null)
-                _context.Applications.Remove(application);
-
+            var app = await _context.Applications.FindAsync(id);
+            if (app != null) _context.Applications.Remove(app);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Import()
+        [Authorize(Roles = "admin")]
+        public IActionResult Import() => View();
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "admin")]
+        public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken ct)
         {
+            ModelState.Remove("fileExcel");
+            if (fileExcel == null || fileExcel.Length == 0) { ModelState.AddModelError("", "Оберіть файл"); return View(); }
+            const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            if (fileExcel.ContentType != xlsx) { ModelState.AddModelError("", "Лише .xlsx"); return View(); }
+            try { var svc = _applicationDataPortServiceFactory.GetImportService(fileExcel.ContentType); using var s = fileExcel.OpenReadStream(); await svc.ImportFromStreamAsync(s, ct); return RedirectToAction(nameof(Index)); }
+            catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); return View(); }
+            catch { ModelState.AddModelError("", "Помилка при імпорті."); return View(); }
+        }
+
+        [HttpGet, Authorize(Roles = "admin")]
+        public async Task<IActionResult> Export(CancellationToken ct)
+        {
+            const string c = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            var svc = _applicationDataPortServiceFactory.GetExportService(c);
+            var ms = new MemoryStream(); await svc.WriteToAsync(ms, ct); await ms.FlushAsync(ct); ms.Position = 0;
+            return new FileStreamResult(ms, c) { FileDownloadName = "applications_export.xlsx" };
+        }
+
+        // ============================================================
+        //  СТУДЕНТ: мої заяви
+        // ============================================================
+        [Authorize(Roles = "user")]
+        public async Task<IActionResult> MyApplications()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.StudentId == null)
+            {
+                ViewBag.Message = "Ваш акаунт не прив'язаний до жодного студента.";
+                return View(new List<Application>());
+            }
+            var studentId = user.StudentId.Value;
+            var apps = await _context.Applications.AsNoTracking()
+                .Include(a => a.Status)
+                .Where(a => a.Studentid == studentId)
+                .OrderByDescending(a => a.Submissiondate)
+                .ToListAsync();
+            return View(apps);
+        }
+
+        // ============================================================
+        //  СТУДЕНТ: подати заяву — GET
+        // ============================================================
+        [Authorize(Roles = "user")]
+        [HttpGet]
+        public async Task<IActionResult> StudentCreate()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.StudentId == null)
+            {
+                TempData["Error"] = "Акаунт не прив'язаний до студента.";
+                return RedirectToAction("MyApplications");
+            }
+
+            var studentId = user.StudentId.Value;
+
+            // Перевірка активної заяви
+            var hasActive = await _context.Applications
+                .AnyAsync(a => a.Studentid == studentId && (a.Statusid == 1 || a.Statusid == 2));
+            if (hasActive)
+            {
+                TempData["Error"] = "У вас вже є активна заява.";
+                return RedirectToAction("MyApplications");
+            }
+
+            var student = await _context.Students.FindAsync(studentId);
+            var isSettled = await _context.Residencehistories
+                .AnyAsync(r => r.Studentid == studentId && r.Checkoutdate == null);
+
+            // Документи студента
+            var uploadedDocs = await _context.Documents.AsNoTracking()
+                .Include(d => d.Type)
+                .Where(d => d.Studentid == studentId)
+                .ToListAsync();
+
+            // Потрібні типи документів (без пільгових якщо немає пільги)
+            var requiredTypes = await _context.DocumentTypes.AsNoTracking()
+                .Where(t => !t.IsPrivilegeDoc || (student != null && student.HasPrivilege))
+                .ToListAsync();
+
+            var uploadedTypeIds = uploadedDocs.Select(d => d.Typeid).ToHashSet();
+            var missingTypes = requiredTypes.Where(t => !uploadedTypeIds.Contains(t.Typeid)).ToList();
+
+            // Обов'язковий мінімум: Паспорт, ІПН, Флюорографія, Довідка з місця проживання
+            var mandatoryNames = new[] { "Паспорт", "ІПН", "Флюорографія", "Довідка з місця проживання" };
+            var missingMandatory = requiredTypes
+                .Where(t => mandatoryNames.Contains(t.Typename) && !uploadedTypeIds.Contains(t.Typeid))
+                .Select(t => t.Typename).ToList();
+
+            // Перевірка прострочених
+            var expiredDocs = uploadedDocs
+                .Where(d => d.Expirydate.HasValue && d.Expirydate.Value < DateTime.Today)
+                .Select(d => d.Type?.Typename ?? "Невідомий").ToList();
+
+            ViewBag.IsSettled = isSettled;
+            ViewBag.Student = student;
+            ViewBag.UploadedDocs = uploadedDocs;
+            ViewBag.RequiredTypes = requiredTypes;
+            ViewBag.MissingTypes = missingTypes;
+            ViewBag.MissingMandatory = missingMandatory;
+            ViewBag.ExpiredDocs = expiredDocs;
+            ViewBag.HasPrivilege = student?.HasPrivilege ?? false;
+
+            // Для завантаження документів прямо тут
+            ViewBag.AvailableTypesForUpload = missingTypes;
+            ViewBag.TypesJson = System.Text.Json.JsonSerializer.Serialize(
+                missingTypes.Select(t => new { t.Typeid, t.RequiresIssueDate, t.IsLifetime, t.IsPrivilegeDoc, t.Typename }));
+
             return View();
         }
 
+        // ============================================================
+        //  СТУДЕНТ: завантажити документ (з форми заяви)
+        // ============================================================
+        [Authorize(Roles = "user")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+        public async Task<IActionResult> UploadDocumentInline(int typeid, DateTime? issuedate, DateTime? expirydate, IFormFile uploadedFile)
         {
-            ModelState.Remove("fileExcel");
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.StudentId == null) return RedirectToAction("StudentCreate");
 
-            if (fileExcel == null || fileExcel.Length == 0)
-            {
-                ModelState.AddModelError("", "Оберіть файл для завантаження");
-                return View();
-            }
+            var studentId = user.StudentId.Value;
 
-            const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            if (fileExcel.ContentType != xlsx)
+            if (uploadedFile == null || uploadedFile.Length == 0)
             {
-                ModelState.AddModelError("", "Підтримується лише формат .xlsx");
-                return View();
+                TempData["Error"] = "Оберіть файл для завантаження.";
+                return RedirectToAction("StudentCreate");
             }
 
-            try
+            var exists = await _context.Documents.AnyAsync(d => d.Studentid == studentId && d.Typeid == typeid);
+            if (exists)
             {
-                var importService = _applicationDataPortServiceFactory.GetImportService(fileExcel.ContentType);
-                using var stream = fileExcel.OpenReadStream();
-                await importService.ImportFromStreamAsync(stream, cancellationToken);
-                return RedirectToAction(nameof(Index));
+                TempData["Error"] = "Цей тип документа вже завантажено.";
+                return RedirectToAction("StudentCreate");
             }
-            catch (InvalidOperationException ex)
+
+            var docType = await _context.DocumentTypes.FindAsync(typeid);
+            if (docType != null)
             {
-                ModelState.AddModelError("", ex.Message);
-                return View();
+                if (docType.RequiresIssueDate && !issuedate.HasValue)
+                { TempData["Error"] = $"Для \"{docType.Typename}\" обов'язково вкажіть дату видачі."; return RedirectToAction("StudentCreate"); }
+
+                if (!docType.IsLifetime && !expirydate.HasValue)
+                { TempData["Error"] = $"\"{docType.Typename}\" — вкажіть дату закінчення дії."; return RedirectToAction("StudentCreate"); }
+
+                if (issuedate.HasValue && issuedate > DateTime.Today)
+                { TempData["Error"] = "Дата видачі не може бути в майбутньому."; return RedirectToAction("StudentCreate"); }
+
+                if (issuedate.HasValue && expirydate.HasValue && expirydate <= issuedate)
+                { TempData["Error"] = "Дата закінчення має бути пізніше дати видачі."; return RedirectToAction("StudentCreate"); }
+
+                if (docType.Typename == "Флюорографія" && issuedate.HasValue && expirydate.HasValue)
+                {
+                    var expected = issuedate.Value.AddYears(1);
+                    if (expirydate.Value.Date != expected.Date)
+                    { TempData["Error"] = $"Флюорографія дійсна 1 рік — дата закінчення має бути {expected:dd.MM.yyyy}"; return RedirectToAction("StudentCreate"); }
+                }
             }
-            catch (Exception)
+
+            using var ms = new MemoryStream();
+            await uploadedFile.CopyToAsync(ms);
+
+            _context.Documents.Add(new Document
             {
-                ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
-                return View();
-            }
+                Studentid = studentId,
+                Typeid = typeid,
+                Filecontent = ms.ToArray(),
+                Issuedate = issuedate,
+                Expirydate = expirydate,
+                Uploaddate = DateTime.Now
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Документ \"{docType?.Typename}\" завантажено!";
+            return RedirectToAction("StudentCreate");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Export(CancellationToken cancellationToken)
+        // ============================================================
+        //  СТУДЕНТ: подати заяву — POST
+        // ============================================================
+        [Authorize(Roles = "user")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StudentCreate(string applicationtype, string academicperiod)
         {
-            const string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            var exportService = _applicationDataPortServiceFactory.GetExportService(contentType);
+            var user = await _userManager.GetUserAsync(User);
+            if (user?.StudentId == null) return RedirectToAction("MyApplications");
 
-            var memoryStream = new MemoryStream();
-            await exportService.WriteToAsync(memoryStream, cancellationToken);
-            await memoryStream.FlushAsync(cancellationToken);
-            memoryStream.Position = 0;
+            var studentId = user.StudentId.Value;
+            var student = await _context.Students.FindAsync(studentId);
 
-            return new FileStreamResult(memoryStream, contentType)
+            if (string.IsNullOrWhiteSpace(applicationtype))
+            { TempData["Error"] = "Оберіть тип заяви."; return RedirectToAction("StudentCreate"); }
+            if (string.IsNullOrWhiteSpace(academicperiod))
+            { TempData["Error"] = "Вкажіть академічний період."; return RedirectToAction("StudentCreate"); }
+
+            var isSettled = await _context.Residencehistories
+                .AnyAsync(r => r.Studentid == studentId && r.Checkoutdate == null);
+
+            if (applicationtype == "Пролонгація" && !isSettled)
+            { TempData["Error"] = "Пролонгацію можна подати тільки якщо ви вже заселені."; return RedirectToAction("StudentCreate"); }
+            if (applicationtype == "Поселення" && isSettled)
+            { TempData["Error"] = "Ви вже заселені. Подайте заяву на пролонгацію."; return RedirectToAction("StudentCreate"); }
+
+            // Перевірка обов'язкових документів
+            var uploadedTypeIds = await _context.Documents
+                .Where(d => d.Studentid == studentId).Select(d => d.Typeid).ToListAsync();
+
+            var mandatoryTypes = await _context.DocumentTypes
+                .Where(t => new[] { "Паспорт", "ІПН", "Флюорографія", "Довідка з місця проживання" }.Contains(t.Typename))
+                .ToListAsync();
+
+            var missingMandatory = mandatoryTypes
+                .Where(t => !uploadedTypeIds.Contains(t.Typeid))
+                .Select(t => t.Typename).ToList();
+
+            if (missingMandatory.Any())
             {
-                FileDownloadName = "applications_export.xlsx"
-            };
-        }
-
-        private void ValidateDates(Application application)
-        {
-            if (application.Submissiondate.HasValue && application.Submissiondate > DateTime.Now)
-                ModelState.AddModelError("Submissiondate", "Дата подачі не може бути в майбутньому");
-
-            if (application.Submissiondate.HasValue && application.Submissiondate < new DateTime(2010, 1, 1))
-                ModelState.AddModelError("Submissiondate", "Дата подачі не може бути раніше 2010 року");
-
-            if (application.Decisiondate.HasValue && application.Decisiondate > DateTime.Now)
-                ModelState.AddModelError("Decisiondate", "Дата рішення не може бути в майбутньому");
-
-            if (application.Decisiondate.HasValue && application.Submissiondate.HasValue)
-            {
-                if (application.Decisiondate < application.Submissiondate)
-                    ModelState.AddModelError("Decisiondate", "Дата рішення не може бути раніше дати подачі");
-
-                if (application.Decisiondate > application.Submissiondate.Value.AddDays(5))
-                    ModelState.AddModelError("Decisiondate", "Дата рішення має бути не пізніше ніж через 5 днів від дати подачі");
+                TempData["Error"] = $"Спочатку завантажте обов'язкові документи: {string.Join(", ", missingMandatory)}";
+                return RedirectToAction("StudentCreate");
             }
 
-            if (application.Extensionstartdate.HasValue && application.Extensionenddate.HasValue)
+            // Перевірка прострочених
+            var expiredDocs = await _context.Documents.Include(d => d.Type)
+                .Where(d => d.Studentid == studentId && d.Expirydate.HasValue && d.Expirydate.Value < DateTime.Today)
+                .Select(d => d.Type!.Typename).ToListAsync();
+
+            if (expiredDocs.Any())
             {
-                if (application.Extensionenddate < application.Extensionstartdate)
-                    ModelState.AddModelError("Extensionenddate", "Дата кінця продовження не може бути раніше дати початку");
+                TempData["Error"] = $"У вас є прострочені документи: {string.Join(", ", expiredDocs)}. Оновіть їх перед подачею.";
+                return RedirectToAction("StudentCreate");
             }
+
+            // Перевірка пільгового документа
+            if (student?.HasPrivilege == true)
+            {
+                var hasPrivDoc = await _context.Documents.Include(d => d.Type)
+                    .AnyAsync(d => d.Studentid == studentId && d.Type!.IsPrivilegeDoc);
+                if (!hasPrivDoc)
+                {
+                    TempData["Error"] = "Ви вказали наявність пільги — завантажте документ, що її підтверджує.";
+                    return RedirectToAction("StudentCreate");
+                }
+            }
+
+            var pendingStatus = await _context.Applicationstatuses
+                .FirstOrDefaultAsync(s => s.Statusname == "На розгляді");
+
+            _context.Applications.Add(new Application
+            {
+                Studentid = studentId,
+                Statusid = pendingStatus?.Statusid ?? 1,
+                Applicationtype = applicationtype,
+                Submissiondate = DateTime.Now,
+                Academicperiod = academicperiod
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Заяву успішно подано!";
+            return RedirectToAction("MyApplications");
         }
 
-        private bool ApplicationExists(int id)
+        // ============ Private helpers ============
+
+        private async Task<bool> TryAssignRoom(Application application)
         {
-            return _context.Applications.Any(e => e.Applicationid == id);
+            var student = await _context.Students.FindAsync(application.Studentid);
+            if (student == null) return false;
+            if (await _context.Residencehistories.AnyAsync(r => r.Studentid == application.Studentid && r.Checkoutdate == null)) return false;
+            var rooms = await _context.Rooms.ToListAsync();
+            foreach (var room in rooms)
+            {
+                var cur = await _context.Residencehistories.Include(r => r.Student).Where(r => r.Roomid == room.Roomid && r.Checkoutdate == null).ToListAsync();
+                if (cur.Count >= room.Capacity) continue;
+                if (cur.Any() && cur.First().Student?.Gender != student.Gender) continue;
+                _context.Residencehistories.Add(new Residencehistory { Studentid = application.Studentid, Roomid = room.Roomid, Checkindate = DateTime.Today });
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            return false;
         }
+
+        private async Task RecalculateQueuePositions(int newAppId, Student? newStudent)
+        {
+            if (newStudent?.Studentid != null) newStudent = await _context.Students.FindAsync(newStudent.Studentid);
+            var entries = await _context.Queues.Include(q => q.Application).ThenInclude(a => a!.Student).ToListAsync();
+            entries.Add(new Queue { Applicationid = newAppId, Application = new Application { Applicationid = newAppId, Student = newStudent } });
+            var sorted = entries.OrderByDescending(q => q.Application?.Student?.HasPrivilege ?? false).ThenByDescending(q => q.Application?.Student?.DistanceKm ?? 0).ToList();
+            _context.Queues.RemoveRange(await _context.Queues.ToListAsync());
+            for (int i = 0; i < sorted.Count; i++) _context.Queues.Add(new Queue { Applicationid = sorted[i].Applicationid, Position = i + 1 });
+            await _context.SaveChangesAsync();
+        }
+
+        private void ValidateDates(Application app)
+        {
+            if (app.Submissiondate.HasValue && app.Submissiondate > DateTime.Now) ModelState.AddModelError("Submissiondate", "Дата подачі не може бути в майбутньому");
+            if (app.Submissiondate.HasValue && app.Submissiondate < new DateTime(2010, 1, 1)) ModelState.AddModelError("Submissiondate", "Дата подачі не може бути раніше 2010");
+            if (app.Decisiondate.HasValue && app.Decisiondate > DateTime.Now) ModelState.AddModelError("Decisiondate", "Дата рішення не може бути в майбутньому");
+            if (app.Decisiondate.HasValue && app.Submissiondate.HasValue)
+            {
+                if (app.Decisiondate < app.Submissiondate) ModelState.AddModelError("Decisiondate", "Дата рішення раніше дати подачі");
+                if (app.Decisiondate > app.Submissiondate.Value.AddDays(5)) ModelState.AddModelError("Decisiondate", "Рішення пізніше ніж через 5 днів");
+            }
+            if (app.Extensionstartdate.HasValue && app.Extensionenddate.HasValue && app.Extensionenddate < app.Extensionstartdate)
+                ModelState.AddModelError("Extensionenddate", "Дата кінця раніше дати початку");
+        }
+
+        private bool ApplicationExists(int id) => _context.Applications.Any(e => e.Applicationid == id);
     }
 }

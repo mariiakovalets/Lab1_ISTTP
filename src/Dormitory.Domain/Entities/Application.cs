@@ -43,7 +43,6 @@ public partial class Application : IValidatableObject
     public DateOnly? Extensionenddate { get; set; }
 
     [Display(Name = "Адміністратор")]
-    [Required(ErrorMessage = "Оберіть адміністратора, який приймає заявку!")]
     public int? Adminid { get; set; }
 
     [Display(Name = "Академічний період")]

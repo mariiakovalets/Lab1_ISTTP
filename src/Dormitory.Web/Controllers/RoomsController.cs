@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
@@ -6,6 +7,7 @@ using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class RoomsController : Controller
     {
         private readonly DormitoryContext _context;
@@ -104,40 +106,40 @@ namespace Dormitory.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
-{
-    ModelState.Remove("fileExcel");
-    if (fileExcel == null || fileExcel.Length == 0)
-    {
-        ModelState.AddModelError("", "Оберіть файл для завантаження");
-        return View();
-    }
+        public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken cancellationToken)
+        {
+            ModelState.Remove("fileExcel");
+            if (fileExcel == null || fileExcel.Length == 0)
+            {
+                ModelState.AddModelError("", "Оберіть файл для завантаження");
+                return View();
+            }
 
-    const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    if (fileExcel.ContentType != xlsx)
-    {
-        ModelState.AddModelError("", "Підтримується лише формат .xlsx");
-        return View();
-    }
+            const string xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            if (fileExcel.ContentType != xlsx)
+            {
+                ModelState.AddModelError("", "Підтримується лише формат .xlsx");
+                return View();
+            }
 
-    try
-    {
-        var importService = _roomDataPortServiceFactory.GetImportService(fileExcel.ContentType);
-        using var stream = fileExcel.OpenReadStream();
-        await importService.ImportFromStreamAsync(stream, cancellationToken);
-        return RedirectToAction(nameof(Index));
-    }
-    catch (InvalidOperationException ex)
-    {
-        ModelState.AddModelError("", ex.Message);
-        return View();
-    }
-    catch (Exception)
-    {
-        ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
-        return View();
-    }
-}
+            try
+            {
+                var importService = _roomDataPortServiceFactory.GetImportService(fileExcel.ContentType);
+                using var stream = fileExcel.OpenReadStream();
+                await importService.ImportFromStreamAsync(stream, cancellationToken);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View();
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Помилка при імпорті. Перевірте, що файл відповідає очікуваному формату.");
+                return View();
+            }
+        }
 
         [HttpGet]
         public async Task<IActionResult> Export(CancellationToken cancellationToken)

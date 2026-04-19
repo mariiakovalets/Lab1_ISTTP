@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class ResidencehistoryController : Controller
     {
         private readonly DormitoryContext _context;
@@ -19,29 +21,22 @@ namespace Dormitory.Web.Controllers
             _context = context;
         }
 
-        // GET: Residencehistory
         public async Task<IActionResult> Index()
         {
             var dormitoryContext = _context.Residencehistories.Include(r => r.Room).Include(r => r.Student);
             return View(await dormitoryContext.ToListAsync());
         }
 
-        // GET: Residencehistory/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-
             var residencehistory = await _context.Residencehistories
-                .Include(r => r.Room)
-                .Include(r => r.Student)
+                .Include(r => r.Room).Include(r => r.Student)
                 .FirstOrDefaultAsync(m => m.Historyid == id);
-
             if (residencehistory == null) return NotFound();
-
             return View(residencehistory);
         }
 
-        // GET: Residencehistory/Create
         public IActionResult Create()
         {
             ViewData["Roomid"] = new SelectList(_context.Rooms, "Roomid", "Roomnumber");
@@ -49,7 +44,6 @@ namespace Dormitory.Web.Controllers
             return View();
         }
 
-        // POST: Residencehistory/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Historyid,Studentid,Roomid,Checkindate,Checkoutdate")] Residencehistory residencehistory)
@@ -65,51 +59,37 @@ namespace Dormitory.Web.Controllers
             return View(residencehistory);
         }
 
-        // GET: Residencehistory/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
             var residencehistory = await _context.Residencehistories.FindAsync(id);
             if (residencehistory == null) return NotFound();
-
             ViewData["Roomid"] = new SelectList(_context.Rooms, "Roomid", "Roomnumber", residencehistory.Roomid);
             ViewData["Studentid"] = new SelectList(_context.Students, "Studentid", "Fullname", residencehistory.Studentid);
             return View(residencehistory);
         }
 
-        // POST: Residencehistory/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Historyid,Studentid,Roomid,Checkindate,Checkoutdate")] Residencehistory residencehistory)
         {
             if (id != residencehistory.Historyid) return NotFound();
-
             if (ModelState.IsValid)
             {
                 try
                 {
                     var old = await _context.Residencehistories.AsNoTracking()
                         .FirstOrDefaultAsync(r => r.Historyid == id);
-
                     _context.Update(residencehistory);
                     await _context.SaveChangesAsync();
 
-                    // Якщо щойно встановили дату виселення — звільнилось місце
-                    bool justCheckedOut = residencehistory.Checkoutdate.HasValue
-                                          && (old?.Checkoutdate == null);
-
-                    if (justCheckedOut)
-                    {
-                        await TrySettleFromQueue(residencehistory.Roomid);
-                    }
+                    bool justCheckedOut = residencehistory.Checkoutdate.HasValue && (old?.Checkoutdate == null);
+                    if (justCheckedOut) await TrySettleFromQueue(residencehistory.Roomid);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ResidencehistoryExists(residencehistory.Historyid))
-                        return NotFound();
-                    else
-                        throw;
+                    if (!ResidencehistoryExists(residencehistory.Historyid)) return NotFound();
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -118,30 +98,22 @@ namespace Dormitory.Web.Controllers
             return View(residencehistory);
         }
 
-        // GET: Residencehistory/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-
             var residencehistory = await _context.Residencehistories
-                .Include(r => r.Room)
-                .Include(r => r.Student)
+                .Include(r => r.Room).Include(r => r.Student)
                 .FirstOrDefaultAsync(m => m.Historyid == id);
-
             if (residencehistory == null) return NotFound();
-
             return View(residencehistory);
         }
 
-        // POST: Residencehistory/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var residencehistory = await _context.Residencehistories.FindAsync(id);
-            if (residencehistory != null)
-                _context.Residencehistories.Remove(residencehistory);
-
+            if (residencehistory != null) _context.Residencehistories.Remove(residencehistory);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
@@ -149,67 +121,35 @@ namespace Dormitory.Web.Controllers
         private async Task TrySettleFromQueue(int? roomId)
         {
             if (roomId == null) return;
-
             var room = await _context.Rooms.FindAsync(roomId);
             if (room == null) return;
-
-            // Перевіряємо скільки зараз зайнято місць
             var currentResidents = await _context.Residencehistories
                 .Include(r => r.Student)
-                .Where(r => r.Roomid == roomId && r.Checkoutdate == null)
-                .ToListAsync();
-
+                .Where(r => r.Roomid == roomId && r.Checkoutdate == null).ToListAsync();
             if (currentResidents.Count >= room.Capacity) return;
-
             var roomGender = currentResidents.FirstOrDefault()?.Student?.Gender;
-
-            // Беремо першого з черги підходящої статі
             var queueEntries = await _context.Queues
-                .Include(q => q.Application)
-                    .ThenInclude(a => a!.Student)
-                .OrderBy(q => q.Position)
-                .ToListAsync();
-
+                .Include(q => q.Application).ThenInclude(a => a!.Student)
+                .OrderBy(q => q.Position).ToListAsync();
             Queue? match = null;
-
             foreach (var entry in queueEntries)
             {
                 var studentGender = entry.Application?.Student?.Gender;
-
-                // Якщо кімната порожня — беремо першого
-                // Якщо є мешканці — стать має збігатись
-                if (roomGender == null || roomGender == studentGender)
-                {
-                    match = entry;
-                    break;
-                }
+                if (roomGender == null || roomGender == studentGender) { match = entry; break; }
             }
-
             if (match == null) return;
-
-            // Заселяємо
             _context.Residencehistories.Add(new Residencehistory
             {
-                Studentid = match.Application!.Studentid,
-                Roomid = roomId,
-                Checkindate = DateTime.Today
+                Studentid = match.Application!.Studentid, Roomid = roomId, Checkindate = DateTime.Today
             });
-
-            // Видаляємо з черги
             _context.Queues.Remove(match);
             await _context.SaveChangesAsync();
-
-            // Перераховуємо позиції
             var remaining = await _context.Queues.OrderBy(q => q.Position).ToListAsync();
-            for (int i = 0; i < remaining.Count; i++)
-                remaining[i].Position = i + 1;
-
+            for (int i = 0; i < remaining.Count; i++) remaining[i].Position = i + 1;
             await _context.SaveChangesAsync();
         }
 
         private bool ResidencehistoryExists(int id)
-        {
-            return _context.Residencehistories.Any(e => e.Historyid == id);
-        }
+            => _context.Residencehistories.Any(e => e.Historyid == id);
     }
 }

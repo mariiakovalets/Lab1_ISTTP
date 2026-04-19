@@ -1,0 +1,78 @@
+@{
+    ViewData["Title"] = "Мої документи";
+    var docs = ViewBag.Documents as List<Dormitory.Domain.Entities.Document> ?? new();
+    var missingTypes = ViewBag.MissingTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
+}
+
+<h2>Мої документи</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning mt-3">@TempData["Error"]</div>
+}
+
+<p class="mt-3">
+    <a asp-action="UploadDocument" class="btn btn-outline-primary rounded-pill">Завантажити документ</a>
+    <a asp-action="Profile" class="btn btn-outline-secondary rounded-pill ms-2">Назад до профілю</a>
+</p>
+
+@if (missingTypes.Any())
+{
+    <div class="alert alert-info mt-3">
+        <strong>Не завантажені документи:</strong>
+        @string.Join(", ", missingTypes.Select(t => t.Typename))
+    </div>
+}
+
+@if (docs.Any())
+{
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>Тип документа</th>
+                <th>Дата видачі</th>
+                <th>Дата закінчення дії</th>
+                <th>Дата завантаження</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in docs)
+            {
+                var isExpired = doc.Expirydate.HasValue && doc.Expirydate.Value < DateTime.Today;
+                <tr class="@(isExpired ? "table-danger" : "")">
+                    <td>
+                        @doc.Type?.Typename
+                        @if (isExpired)
+                        {
+                            <span class="badge bg-danger ms-1">Прострочений</span>
+                        }
+                    </td>
+                    <td>@doc.Issuedate?.ToString("dd.MM.yyyy")</td>
+                    <td>@doc.Expirydate?.ToString("dd.MM.yyyy")</td>
+                    <td>@doc.Uploaddate?.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a asp-action="DownloadDocument" asp-route-id="@doc.Documentid"
+                               class="btn btn-sm btn-outline-primary rounded-pill">Завантажити</a>
+                            <form asp-action="DeleteDocument" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@doc.Documentid" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
+                                        onclick="return confirm('Видалити цей документ?')">Видалити</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted mt-3">Ви ще не завантажили жодного документа.</p>
+}

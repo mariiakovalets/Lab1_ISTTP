@@ -5,12 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
 
-
 namespace Dormitory.Web.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class AdministratorsController : Controller
     {
         private readonly DormitoryContext _context;
@@ -29,17 +30,11 @@ namespace Dormitory.Web.Controllers
         // GET: Administrators/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var administrator = await _context.Administrators
                 .FirstOrDefaultAsync(m => m.Adminid == id);
-            if (administrator == null)
-            {
-                return NotFound();
-            }
+            if (administrator == null) return NotFound();
 
             return View(administrator);
         }
@@ -51,8 +46,6 @@ namespace Dormitory.Web.Controllers
         }
 
         // POST: Administrators/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Adminid,Username,Fullname")] Administrator administrator)
@@ -69,30 +62,20 @@ namespace Dormitory.Web.Controllers
         // GET: Administrators/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var administrator = await _context.Administrators.FindAsync(id);
-            if (administrator == null)
-            {
-                return NotFound();
-            }
+            if (administrator == null) return NotFound();
+
             return View(administrator);
         }
 
         // POST: Administrators/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Adminid,Username,Fullname")] Administrator administrator)
         {
-            if (id != administrator.Adminid)
-            {
-                return NotFound();
-            }
+            if (id != administrator.Adminid) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -104,13 +87,9 @@ namespace Dormitory.Web.Controllers
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!AdministratorExists(administrator.Adminid))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -120,17 +99,11 @@ namespace Dormitory.Web.Controllers
         // GET: Administrators/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var administrator = await _context.Administrators
                 .FirstOrDefaultAsync(m => m.Adminid == id);
-            if (administrator == null)
-            {
-                return NotFound();
-            }
+            if (administrator == null) return NotFound();
 
             return View(administrator);
         }
@@ -142,9 +115,7 @@ namespace Dormitory.Web.Controllers
         {
             var administrator = await _context.Administrators.FindAsync(id);
             if (administrator != null)
-            {
                 _context.Administrators.Remove(administrator);
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

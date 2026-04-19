@@ -1,0 +1,18 @@
+@model IEnumerable<Dormitory.Domain.Entities.User>
+@{ ViewData["Title"] = "Список користувачів"; }
+
+<h2>Список користувачів</h2>
+<table class="table">
+    <thead><tr><th>Email</th><th>Повне ім'я</th><th></th></tr></thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>@user.FullName</td>
+                <td><a class="btn btn-sm btn-outline-primary rounded-pill" asp-action="Edit" asp-route-userId="@user.Id">Права доступу</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a asp-action="Index" class="btn btn-outline-secondary rounded-pill">Список ролей</a>

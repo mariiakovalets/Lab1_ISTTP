@@ -1,0 +1,80 @@
+@model IEnumerable<Dormitory.Domain.Entities.Application>
+
+@{
+    ViewData["Title"] = "Мої заяви";
+}
+
+<h2>Мої заяви</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning mt-3">@TempData["Error"]</div>
+}
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">@ViewBag.Message</div>
+}
+
+<p class="mt-3">
+    <a asp-action="StudentCreate" class="btn btn-outline-primary rounded-pill">Подати нову заяву</a>
+</p>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Тип заяви</th>
+                <th>Академічний період</th>
+                <th>Дата подачі</th>
+                <th>Статус</th>
+                <th>Дата рішення</th>
+                <th>Причина відмови</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Applicationid</td>
+                    <td>@item.Applicationtype</td>
+                    <td>@item.Academicperiod</td>
+                    <td>@item.Submissiondate?.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>
+                        @{
+                            var statusName = item.Status?.Statusname ?? "Невідомо";
+                            var badgeClass = statusName switch
+                            {
+                                "Схвалено" => "bg-success",
+                                "Відхилено" => "bg-danger",
+                                "На розгляді" => "bg-warning text-dark",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@statusName</span>
+                    </td>
+                    <td>@item.Decisiondate?.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.Rejectionreason))
+                        {
+                            <span class="text-danger">@item.Rejectionreason</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (ViewBag.Message == null)
+{
+    <p class="text-muted mt-3">У вас ще немає поданих заяв.</p>
+}

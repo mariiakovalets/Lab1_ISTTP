@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "Завантажити документ";
+    var typesJson = ViewBag.TypesJson as string ?? "[]";
+}
+
+<h2>Завантажити документ</h2>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="UploadDocument" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Тип документа</label>
+                <select name="typeid" id="typeidSelect" class="form-control" asp-items="@(ViewData["Typeid"] as SelectList)">
+                    <option value="">Оберіть тип документа</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3" id="issuedateGroup" style="display:none;">
+                <label class="control-label">Дата видачі</label>
+                <input name="issuedate" id="issuedate" class="form-control" type="date" />
+                <small class="text-muted" id="issuedateHint"></small>
+            </div>
+
+            <div class="form-group mb-3" id="expirydateGroup" style="display:none;">
+                <label class="control-label">Дата закінчення дії</label>
+                <input name="expirydate" id="expirydate" class="form-control" type="date" />
+                <small class="text-muted" id="expirydateHint"></small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label">Скан-копія документа</label>
+                <input name="uploadedFile" class="form-control" type="file" accept=".pdf,.jpg,.jpeg,.png" />
+                <small class="text-muted">PDF, JPG або PNG</small>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button type="submit" class="btn btn-outline-primary rounded-pill">Завантажити</button>
+                <a asp-action="MyDocuments" class="btn btn-outline-secondary rounded-pill">Назад</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const types = @Html.Raw(typesJson);
+
+        document.getElementById('typeidSelect').addEventListener('change', function() {
+            const typeId = parseInt(this.value);
+            const type = types.find(t => t.Typeid === typeId);
+
+            const issueDateGroup = document.getElementById('issuedateGroup');
+            const expiryDateGroup = document.getElementById('expirydateGroup');
+            const issuedateHint = document.getElementById('issuedateHint');
+            const expirydateHint = document.getElementById('expirydateHint');
+
+            if (!type) {
+                issueDateGroup.style.display = 'none';
+                expiryDateGroup.style.display = 'none';
+                return;
+            }
+
+            // Дата видачі
+            if (type.RequiresIssueDate) {
+                issueDateGroup.style.display = 'block';
+                issuedateHint.textContent = 'Обов\'язкове поле для цього типу документа';
+            } else {
+                issueDateGroup.style.display = 'none';
+            }
+
+            // Дата закінчення
+            if (!type.IsLifetime) {
+                expiryDateGroup.style.display = 'block';
+                expirydateHint.textContent = 'Документ має обмежений термін дії — вкажіть дату закінчення';
+            } else {
+                expiryDateGroup.style.display = 'none';
+            }
+        });
+    </script>
+}

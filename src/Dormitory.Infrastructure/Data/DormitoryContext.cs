@@ -161,6 +161,9 @@ public partial class DormitoryContext : DbContext
                 .HasDefaultValue(true)
                 .HasColumnName("is_lifetime");
             entity.Property(e => e.RequiresIssueDate).HasColumnName("requires_issue_date");
+            entity.Property(e => e.IsPrivilegeDoc)
+                .HasDefaultValue(false)
+                .HasColumnName("is_privilege_doc");
             entity.Property(e => e.Typename)
                 .HasMaxLength(100)
                 .HasColumnName("typename");

@@ -1,0 +1,56 @@
+@model Dormitory.Domain.Entities.Student
+
+@{
+    ViewData["Title"] = "Редагувати профіль";
+}
+
+<h2>Редагувати профіль</h2>
+<hr />
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">@TempData["Error"]</div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Ваші дані</h5>
+
+                <p class="text-muted mb-1">ПІБ (не можна змінити)</p>
+                <p class="fw-bold">@Model.Fullname</p>
+
+                <p class="text-muted mb-1">Курс (не можна змінити)</p>
+                <p class="fw-bold">@Model.Course</p>
+
+                <p class="text-muted mb-1">Факультет (не можна змінити)</p>
+                <p class="fw-bold">@Model.Faculty?.Facultyname</p>
+
+                <hr />
+
+                <form asp-action="EditProfile" method="post">
+                    <div class="form-group mb-3">
+                        <label class="control-label">Адреса</label>
+                        <input name="address" class="form-control" value="@Model.Address" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Телефон</label>
+                        <input name="phone" class="form-control" value="@Model.Phone" placeholder="0XXXXXXXXX або +380XXXXXXXXX" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Email</label>
+                        <input name="email" type="email" class="form-control" value="@Model.Email" />
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-outline-primary rounded-pill">Зберегти</button>
+                        <a asp-action="Profile" class="btn btn-outline-secondary rounded-pill">Скасувати</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

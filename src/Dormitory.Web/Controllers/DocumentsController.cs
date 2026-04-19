@@ -4,12 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Dormitory.Domain.Entities;
 using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class DocumentsController : Controller
     {
         private readonly DormitoryContext _context;
@@ -49,7 +51,6 @@ namespace Dormitory.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Documentid,Studentid,Typeid,Issuedate,Expirydate")] Document document, IFormFile uploadedFile)
         {
-            // Файл
             if (uploadedFile != null && uploadedFile.Length > 0)
             {
                 using var memoryStream = new MemoryStream();
@@ -57,25 +58,21 @@ namespace Dormitory.Web.Controllers
                 document.Filecontent = memoryStream.ToArray();
             }
 
-            // Дата завантаження — завжди сьогодні
             document.Uploaddate = DateTime.Now;
 
             ModelState.Remove("Filecontent");
             ModelState.Remove("Uploaddate");
 
-            // При Create — файл обов'язковий (після Remove!)
             if (uploadedFile == null || uploadedFile.Length == 0)
             {
                 ModelState.AddModelError("Filecontent", "Завантажте скан-копію документа!");
             }
 
-            // Перевірка на дублікат документа
             var exists = await _context.Documents
                 .AnyAsync(d => d.Studentid == document.Studentid && d.Typeid == document.Typeid);
             if (exists)
                 ModelState.AddModelError("Typeid", "Цей студент вже має документ цього типу!");
 
-            // Валідація типу документа
             var docType = await _context.DocumentTypes.FindAsync(document.Typeid);
             if (docType != null)
             {
@@ -86,7 +83,6 @@ namespace Dormitory.Web.Controllers
                     ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
             }
 
-            // Валідація дат
             ValidateDates(document, docType);
 
             if (ModelState.IsValid)
@@ -122,7 +118,6 @@ namespace Dormitory.Web.Controllers
             ModelState.Remove("Filecontent");
             ModelState.Remove("Uploaddate");
 
-            // Валідація типу документа
             var docType = await _context.DocumentTypes.FindAsync(document.Typeid);
             if (docType != null)
             {
@@ -133,7 +128,6 @@ namespace Dormitory.Web.Controllers
                     ModelState.AddModelError("Expirydate", "Цей документ не є довічним! Обов'язково вкажіть дату закінчення дії.");
             }
 
-            // Валідація дат
             ValidateDates(document, docType);
 
             if (ModelState.IsValid)
@@ -148,7 +142,6 @@ namespace Dormitory.Web.Controllers
                     existingDoc.Issuedate = document.Issuedate;
                     existingDoc.Expirydate = document.Expirydate;
 
-                    // При Edit — файл необов'язковий (залишається старий)
                     if (uploadedFile != null && uploadedFile.Length > 0)
                     {
                         using var memoryStream = new MemoryStream();
@@ -174,21 +167,17 @@ namespace Dormitory.Web.Controllers
 
         private void ValidateDates(Document document, DocumentType? docType)
         {
-            // Дата видачі не може бути в майбутньому
             if (document.Issuedate.HasValue && document.Issuedate > DateTime.Today)
                 ModelState.AddModelError("Issuedate", "Дата видачі не може бути в майбутньому");
 
-            // Дата видачі не раніше 2010
             if (document.Issuedate.HasValue && document.Issuedate < new DateTime(2010, 1, 1))
                 ModelState.AddModelError("Issuedate", "Дата видачі не може бути раніше 2010 року");
 
-            // Дата закінчення має бути ПІЗНІШЕ дати видачі (не рівна!)
             if (document.Issuedate.HasValue && document.Expirydate.HasValue)
             {
                 if (document.Expirydate <= document.Issuedate)
                     ModelState.AddModelError("Expirydate", "Дата закінчення має бути пізніше дати видачі");
 
-                // Флюорографія діє рівно 1 рік
                 if (docType != null && docType.Typename == "Флюорографія")
                 {
                     var expectedExpiry = document.Issuedate.Value.AddYears(1);
@@ -214,13 +203,10 @@ namespace Dormitory.Web.Controllers
 
             if (document.Filecontent.Length > 3)
             {
-                // PDF: %PDF
                 if (document.Filecontent[0] == 0x25 && document.Filecontent[1] == 0x50)
                 { contentType = "application/pdf"; extension = "pdf"; }
-                // JPG: FF D8
                 else if (document.Filecontent[0] == 0xFF && document.Filecontent[1] == 0xD8)
                 { contentType = "image/jpeg"; extension = "jpg"; }
-                // PNG: 89 50 4E 47
                 else if (document.Filecontent[0] == 0x89 && document.Filecontent[1] == 0x50)
                 { contentType = "image/png"; extension = "png"; }
             }

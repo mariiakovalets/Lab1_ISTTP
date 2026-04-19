@@ -1,0 +1,96 @@
+@{
+    ViewData["Title"] = "Мій профіль";
+    var user = ViewBag.User as Dormitory.Domain.Entities.User;
+    var student = ViewBag.Student as Dormitory.Domain.Entities.Student;
+}
+
+<h2>Мій профіль</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning">@TempData["Error"]</div>
+}
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Дані акаунту</h5>
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="text-muted" style="width:200px;">Email</td>
+                        <td>@user?.Email</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Повне ім'я</td>
+                        <td>@user?.FullName</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        @if (student != null)
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Дані студента</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted" style="width:200px;">ПІБ</td>
+                            <td>@student.Fullname</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Курс</td>
+                            <td>@student.Course</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Дата народження</td>
+                            <td>@student.Birthdate?.ToString("dd.MM.yyyy")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Факультет</td>
+                            <td>@student.Faculty?.Facultyname</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Адреса</td>
+                            <td>@student.Address</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Телефон</td>
+                            <td>@student.Phone</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Email</td>
+                            <td>@student.Email</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Стать</td>
+                            <td>@(student.Gender == "Ч" ? "Чоловіча" : student.Gender == "Ж" ? "Жіноча" : student.Gender)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Відстань до Києва</td>
+                            <td>@student.DistanceKm км</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Пільга</td>
+                            <td>@(student.HasPrivilege ? "Так" : "Ні")</td>
+                        </tr>
+                    </table>
+                    <a asp-action="EditProfile" class="btn btn-outline-primary rounded-pill">Редагувати профіль</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info mt-3">
+                Ваш акаунт ще не прив'язаний до студента в базі даних. Зверніться до адміністратора.
+            </div>
+        }
+    </div>
+</div>
+
+<a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill mt-3">На головну</a>

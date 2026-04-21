@@ -1,13 +1,27 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 using Dormitory.Web.Models;
+using Dormitory.Domain.Entities;
 
 namespace Dormitory.Web.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index()
+    private readonly UserManager<User> _userManager;
+
+    public HomeController(UserManager<User> userManager)
     {
+        _userManager = userManager;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            ViewBag.FullName = user?.FullName;
+        }
         return View();
     }
 

@@ -132,7 +132,29 @@ public class AccountController : Controller
             student = await _context.Students.Include(s => s.Faculty)
                 .FirstOrDefaultAsync(s => s.Studentid == user.StudentId);
         ViewBag.User = user;
+        // Перевіряємо чи заселений
+        if (user.StudentId != null)
+        {
+            var residence = await _context.Residencehistories
+                .Include(r => r.Room)
+                .Where(r => r.Studentid == user.StudentId && r.Checkoutdate == null)
+                .FirstOrDefaultAsync();
+            ViewBag.CurrentRoom = residence?.Room;
+        }
         ViewBag.Student = student;
+        // Перевірка обов'язкових документів
+        if (user.StudentId != null)
+        {
+            var uploadedTypeNames = await _context.Documents
+                .Include(d => d.Type)
+                .Where(d => d.Studentid == user.StudentId)
+                .Select(d => d.Type!.Typename)
+                .ToListAsync();
+            var mandatory = new[] { "Паспорт", "ІПН", "Флюорографія", "Довідка з місця проживання" };
+            var missing = mandatory.Where(m => !uploadedTypeNames.Contains(m)).ToList();
+            if (missing.Any())
+                ViewBag.MissingDocs = missing;
+        }
         return View();
     }
 
@@ -146,20 +168,36 @@ public class AccountController : Controller
         var student = await _context.Students.Include(s => s.Faculty)
             .FirstOrDefaultAsync(s => s.Studentid == user.StudentId);
         if (student == null) return NotFound();
+        ViewData["FacultyId"] = new SelectList(_context.Faculties, "Facultyid", "Facultyname", student.Facultyid);
         return View(student);
     }
 
     [Authorize(Roles = "user")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditProfile(string address, string phone, string email)
+    public async Task<IActionResult> EditProfile(string fullname, int? course, string address, string phone, string email, string gender, DateOnly? birthdate, int? facultyid)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user?.StudentId == null) return RedirectToAction("Profile");
         var student = await _context.Students.FindAsync(user.StudentId);
         if (student == null) return NotFound();
 
-        if (!string.IsNullOrWhiteSpace(address)) student.Address = address;
+        if (!string.IsNullOrWhiteSpace(fullname))
+        {
+            student.Fullname = fullname;
+            user.FullName = fullname;
+            await _userManager.UpdateAsync(user);
+        }
+        if (course.HasValue && course >= 1 && course <= 6)
+            student.Course = course;
+        if (!string.IsNullOrWhiteSpace(address))
+            student.Address = address;
+        if (!string.IsNullOrWhiteSpace(gender) && (gender == "Ч" || gender == "Ж"))
+            student.Gender = gender;
+        if (birthdate.HasValue)
+            student.Birthdate = birthdate;
+        if (facultyid.HasValue)
+            student.Facultyid = facultyid;
         if (!string.IsNullOrWhiteSpace(phone))
         {
             phone = phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");

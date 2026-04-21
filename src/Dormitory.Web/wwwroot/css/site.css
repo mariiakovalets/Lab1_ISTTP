@@ -29,3 +29,126 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.table tbody tr {
+    background-color: transparent !important;
+}
+
+body {
+    background-color: #f8f7ff !important;
+}
+
+.navbar {
+    background-color: #ddd8f3 !important;
+}
+
+.form-control, .form-select {
+    border: 1.5px solid #534AB7 !important;
+    border-radius: 20px !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #534AB7 !important;
+    box-shadow: 0 0 0 0.2rem rgba(83, 74, 183, 0.25) !important;
+}
+
+.form-check-input:checked {
+    background-color: #534AB7 !important;
+    border-color: #534AB7 !important;
+}
+
+.card {
+    border: 1.5px solid #534AB7 !important;
+    border-radius: 20px !important;
+}
+
+/* Таблиці — фіолетова рамка і заокруглення */
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1.5px solid #534AB7 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}
+
+.table th, .table td {
+    border-color: #e8e5f7 !important;
+}
+
+/* Алерти — в фіолетову гамму */
+.alert-success {
+    background-color: #ece9fb !important;
+    border-color: #534AB7 !important;
+    color: #534AB7 !important;
+}
+
+.alert-warning {
+    background-color: #fff8e6 !important;
+    border-color: #e6c200 !important;
+    color: #8a7500 !important;
+}
+
+.alert-danger {
+    background-color: #fce8e8 !important;
+    border-color: #d85a5a !important;
+    color: #a33 !important;
+}
+
+.alert-info {
+    background-color: #fff8e6 !important;
+    border-color: #e6c200 !important;
+    color: #8a7500 !important;
+}
+
+/* Badge — без обведення, в гамму */
+.bg-success {
+    background-color: #534AB7 !important;
+}
+
+.bg-warning {
+    background-color: #e6c200 !important;
+    color: #fff !important;
+}
+
+.bg-danger {
+    background-color: #d85a5a !important;
+}
+
+.bg-secondary {
+    background-color: #a9a3d1 !important;
+}
+
+.card .table {
+    border: none !important;
+}
+
+.btn-outline-secondary {
+    color: #534AB7 !important;
+    border-color: #534AB7 !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #534AB7 !important;
+    color: #fff !important;
+}
+
+.btn-primary {
+    background-color: #534AB7 !important;
+    border-color: #534AB7 !important;
+}
+
+
+.btn-outline-primary {
+    color: #534AB7 !important;
+    border-color: #534AB7 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #534AB7 !important;
+    color: #fff !important;
+}
+
+.badge.bg-info {
+    background-color: #e6c200 !important;
+    color: #fff !important;
+}

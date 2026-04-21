@@ -4,7 +4,7 @@
     var student = ViewBag.Student as Dormitory.Domain.Entities.Student;
 }
 
-<h2>Мій профіль</h2>
+<h2>Профіль</h2>
 
 @if (TempData["Success"] != null)
 {
@@ -15,61 +15,53 @@
     <div class="alert alert-warning">@TempData["Error"]</div>
 }
 
+@if (ViewBag.MissingDocs != null)
+{
+    var missing = ViewBag.MissingDocs as List<string>;
+    <div class="alert alert-warning mt-3">
+        <strong>Увага!</strong> Відсутні обов'язкові документи: @string.Join(", ", missing).
+        Без них ви не зможете подати нову заяву. <a asp-action="MyDocuments">Завантажити</a>
+    </div>
+}
+
 <div class="row mt-4">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Дані акаунту</h5>
-                <table class="table table-borderless">
-                    <tr>
-                        <td class="text-muted" style="width:200px;">Email</td>
-                        <td>@user?.Email</td>
-                    </tr>
-                    <tr>
-                        <td class="text-muted">Повне ім'я</td>
-                        <td>@user?.FullName</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
         @if (student != null)
         {
-            <div class="card mt-3">
+            <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Дані студента</h5>
                     <table class="table table-borderless">
                         <tr>
                             <td class="text-muted" style="width:200px;">ПІБ</td>
-                            <td>@student.Fullname</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Курс</td>
-                            <td>@student.Course</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Дата народження</td>
-                            <td>@student.Birthdate?.ToString("dd.MM.yyyy")</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Факультет</td>
-                            <td>@student.Faculty?.Facultyname</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Адреса</td>
-                            <td>@student.Address</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Телефон</td>
-                            <td>@student.Phone</td>
+                            <td><strong>@student.Fullname</strong></td>
                         </tr>
                         <tr>
                             <td class="text-muted">Email</td>
                             <td>@student.Email</td>
                         </tr>
                         <tr>
+                            <td class="text-muted">Телефон</td>
+                            <td>@student.Phone</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Курс</td>
+                            <td>@student.Course</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Факультет</td>
+                            <td>@student.Faculty?.Facultyname</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Дата народження</td>
+                            <td>@student.Birthdate?.ToString("dd.MM.yyyy")</td>
+                        </tr>
+                        <tr>
                             <td class="text-muted">Стать</td>
                             <td>@(student.Gender == "Ч" ? "Чоловіча" : student.Gender == "Ж" ? "Жіноча" : student.Gender)</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Адреса</td>
+                            <td>@student.Address</td>
                         </tr>
                         <tr>
                             <td class="text-muted">Відстань до Києва</td>
@@ -79,8 +71,26 @@
                             <td class="text-muted">Пільга</td>
                             <td>@(student.HasPrivilege ? "Так" : "Ні")</td>
                         </tr>
+                        @if (ViewBag.CurrentRoom != null)
+                        {
+                            var room = ViewBag.CurrentRoom as Dormitory.Domain.Entities.Room;
+                            <tr>
+                                <td class="text-muted">Кімната</td>
+                                <td><strong>@room?.Roomnumber</strong> (поверх @room?.Floor)</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="text-muted">Кімната</td>
+                                <td class="text-muted">Не заселений</td>
+                            </tr>
+                        }
                     </table>
-                    <a asp-action="EditProfile" class="btn btn-outline-primary rounded-pill">Редагувати профіль</a>
+                    <div class="d-flex gap-2">
+                        <a asp-action="EditProfile" class="btn btn-outline-primary rounded-pill">Редагувати профіль</a>
+                        <a asp-action="MyDocuments" class="btn btn-outline-secondary rounded-pill">Документи</a>
+                    </div>
                 </div>
             </div>
         }

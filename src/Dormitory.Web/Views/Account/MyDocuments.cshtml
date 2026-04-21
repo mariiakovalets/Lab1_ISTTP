@@ -4,7 +4,7 @@
     var missingTypes = ViewBag.MissingTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
 }
 
-<h2>Мої документи</h2>
+<h2>Документи</h2>
 
 @if (TempData["Success"] != null)
 {
@@ -16,7 +16,7 @@
 }
 
 <p class="mt-3">
-    <a asp-action="UploadDocument" class="btn btn-outline-primary rounded-pill">Завантажити документ</a>
+    <a asp-action="UploadDocument" class="btn btn-outline-primary rounded-pill">Додати документ</a>
     <a asp-action="Profile" class="btn btn-outline-secondary rounded-pill ms-2">Назад до профілю</a>
 </p>
 
@@ -63,7 +63,7 @@
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@doc.Documentid" />
                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"
-                                        onclick="return confirm('Видалити цей документ?')">Видалити</button>
+                                        onclick="event.preventDefault(); showConfirm('Видалити цей документ? Без обов\'язкових документів ви не зможете подати нову заяву.', () => this.closest('form').submit()); return false;">Видалити</button>
                             </form>
                         </div>
                     </td>

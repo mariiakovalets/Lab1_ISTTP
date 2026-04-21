@@ -2,53 +2,56 @@
 
 @{
     ViewData["Title"] = "Документи";
+    var grouped = Model.GroupBy(d => d.Student?.Fullname ?? "Невідомий").OrderBy(g => g.Key);
 }
 
-<h1>Список документів</h1>
+<h1>Документи студентів</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати новий документ</a>
-</p>
+@foreach (var group in grouped)
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">@group.Key</h5>
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Тип документа</th>
+                        <th>Дата видачі</th>
+                        <th>Дата закінчення дії</th>
+                        <th>Дата завантаження</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in group.OrderBy(d => d.Type?.Typename))
+                    {
+                        var isExpired = item.Expirydate.HasValue && item.Expirydate.Value < DateTime.Today;
+                        <tr>
+                            <td>
+                                @item.Type?.Typename
+                                @if (isExpired)
+                                {
+                                    <span class="badge bg-danger ms-1">Прострочений</span>
+                                }
+                            </td>
+                            <td>@item.Issuedate?.ToString("dd.MM.yyyy")</td>
+                            <td>@item.Expirydate?.ToString("dd.MM.yyyy")</td>
+                            <td>@item.Uploaddate?.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @if (item.Filecontent != null && item.Filecontent.Length > 0)
+                                {
+                                    <a asp-action="Download" asp-route-id="@item.Documentid" class="btn btn-sm btn-outline-secondary rounded-pill">Завантажити</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Студент</th>
-            <th>Тип документа</th>
-            <th>@Html.DisplayNameFor(model => model.Filecontent)</th>
-            <th>@Html.DisplayNameFor(model => model.Issuedate)</th>
-            <th>@Html.DisplayNameFor(model => model.Expirydate)</th>
-            <th>@Html.DisplayNameFor(model => model.Uploaddate)</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.Student.Fullname)</td>
-                <td>@Html.DisplayFor(modelItem => item.Type.Typename)</td>
-                <td>
-                    @if (item.Filecontent != null && item.Filecontent.Length > 0)
-                    {
-                        <span>Є файл</span>
-                    }
-                    else
-                    {
-                        <span>Немає</span>
-                    }
-                </td>
-                <td>@Html.DisplayFor(modelItem => item.Issuedate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Expirydate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Uploaddate)</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <a asp-action="Edit" asp-route-id="@item.Documentid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
-                        <a asp-action="Details" asp-route-id="@item.Documentid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
-                        <a asp-action="Delete" asp-route-id="@item.Documentid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
-                    </div>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@if (!grouped.Any())
+{
+    <p class="text-muted mt-3">Документів ще немає.</p>
+}

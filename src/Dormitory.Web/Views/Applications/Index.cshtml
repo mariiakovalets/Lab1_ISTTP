@@ -7,46 +7,40 @@
 <h1>Список заяв</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати нову заяву</a>
-    <a asp-action="Import" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Завантажити з файлу</a>
-    <a asp-action="Export" class="btn btn-outline-primary mb-3 ms-2 rounded-pill">Експортувати у файл</a>
+    <a asp-action="Import" class="btn btn-outline-primary mb-3 rounded-pill">Завантажити з файлу</a>
+    <a asp-action="Export" class="btn btn-outline-primary mb-3 rounded-pill">Експортувати у файл</a>
 </p>
 
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.Applicationtype)</th>
-            <th>@Html.DisplayNameFor(model => model.Submissiondate)</th>
-            <th>@Html.DisplayNameFor(model => model.Decisiondate)</th>
-            <th>@Html.DisplayNameFor(model => model.Rejectionreason)</th>
-            <th>@Html.DisplayNameFor(model => model.Extensionstartdate)</th>
-            <th>@Html.DisplayNameFor(model => model.Extensionenddate)</th>
-            <th>@Html.DisplayNameFor(model => model.Academicperiod)</th>
-            <th>Адмін</th>
-            <th>Статус</th>
             <th>Студент</th>
+            <th>Тип</th>
+            <th>Період</th>
+            <th>Дата подачі</th>
+            <th>Статус</th>
+            <th>Дата рішення</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
+            var statusName = item.Status?.Statusname ?? "";
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Applicationtype)</td>
-                <td>@Html.DisplayFor(modelItem => item.Submissiondate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Decisiondate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Rejectionreason)</td>
-                <td>@Html.DisplayFor(modelItem => item.Extensionstartdate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Extensionenddate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Academicperiod)</td>
-                <td>@Html.DisplayFor(modelItem => item.Admin.Username)</td>
-                <td>@Html.DisplayFor(modelItem => item.Status.Statusname)</td>
-                <td>@Html.DisplayFor(modelItem => item.Student.Fullname)</td>
+                <td>@item.Student?.Fullname</td>
+                <td>@item.Applicationtype</td>
+                <td>@item.Academicperiod</td>
+                <td>@item.Submissiondate?.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@statusName</td>
+                <td>@item.Decisiondate?.ToString("dd.MM.yyyy")</td>
                 <td>
                     <div class="d-flex gap-1">
-                        <a asp-action="Edit" asp-route-id="@item.Applicationid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
-                        <a asp-action="Details" asp-route-id="@item.Applicationid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
-                        <a asp-action="Delete" asp-route-id="@item.Applicationid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
+                        @if (statusName == "На розгляді")
+                        {
+                            <a asp-action="Review" asp-route-id="@item.Applicationid" class="btn btn-sm btn-outline-primary rounded-pill">Розглянути</a>
+                        }
+                        <a asp-action="Details" asp-route-id="@item.Applicationid" class="btn btn-sm btn-outline-secondary rounded-pill">Деталі</a>
                     </div>
                 </td>
             </tr>

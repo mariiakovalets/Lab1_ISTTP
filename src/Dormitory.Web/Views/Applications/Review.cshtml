@@ -1,0 +1,136 @@
+@model Dormitory.Domain.Entities.Application
+
+@{
+    ViewData["Title"] = "Розгляд заяви";
+    var docs = ViewBag.StudentDocuments as List<Dormitory.Domain.Entities.Document> ?? new();
+    var requiredTypes = ViewBag.RequiredTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
+    var uploadedTypeIds = docs.Select(d => d.Typeid).ToHashSet();
+    var missingMandatory = ViewBag.MissingMandatory as List<string> ?? new();
+    var expiredDocs = ViewBag.ExpiredDocs as List<string> ?? new();
+    bool canApprove = !missingMandatory.Any() && !expiredDocs.Any();
+}
+
+<h2>Розгляд заяви </h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-warning mt-3">@TempData["Error"]</div>
+}
+
+<div class="row mt-3">
+    @* ---- Документи ---- *@
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Документи студента</h5>
+
+                @if (expiredDocs.Any())
+                {
+                    <div class="alert alert-danger py-2">Прострочені: @string.Join(", ", expiredDocs)</div>
+                }
+                @if (missingMandatory.Any())
+                {
+                    <div class="alert alert-warning py-2">Відсутні обов'язкові: @string.Join(", ", missingMandatory)</div>
+                }
+
+                <table class="table table-sm">
+                    <thead><tr><th>Документ</th><th>Видано</th><th>Дійсний до</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var type in requiredTypes)
+                        {
+                            var doc = docs.FirstOrDefault(d => d.Typeid == type.Typeid);
+                            var isExpired = doc?.Expirydate.HasValue == true && doc.Expirydate.Value < DateTime.Today;
+                            <tr class="@(isExpired ? "table-danger" : "")">
+                                <td>
+                                    @type.Typename
+                                    @if (type.IsPrivilegeDoc) { <span class="badge bg-info text-dark">пільга</span> }
+                                </td>
+                                @if (doc != null)
+                                {
+                                    <td>@doc.Issuedate?.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        @doc.Expirydate?.ToString("dd.MM.yyyy")
+                                        @if (isExpired) { <span style="color:#e6c200;">&#x26A0;</span> }
+                                    </td>
+                                    <td>
+                                        <a asp-controller="Documents" asp-action="Download" asp-route-id="@doc.Documentid"
+                                           class="btn btn-sm btn-outline-secondary rounded-pill">Скачати</a>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td colspan="2"></td>
+                                    <td><span style="color:#999;">&#x2718;</span></td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* Інформація про студента *@
+        @if (Model.Student != null)
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6>Студент: @Model.Student.Fullname</h6>
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr><td class="text-muted">Курс</td><td>@Model.Student.Course</td></tr>
+                        <tr><td class="text-muted">Факультет</td><td>@Model.Student.Faculty?.Facultyname</td></tr>
+                        <tr><td class="text-muted">Відстань</td><td>@Model.Student.DistanceKm км</td></tr>
+                        <tr><td class="text-muted">Пільга</td><td>@(Model.Student.HasPrivilege ? Html.Raw("<span style=\"color:#534AB7;\">&#x2714;</span> Так") : Html.Raw("Ні"))</td></tr>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ---- Рішення ---- *@
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Заява</h5>
+                <table class="table table-borderless table-sm">
+                    <tr><td class="text-muted">Тип</td><td>@Model.Applicationtype</td></tr>
+                    <tr><td class="text-muted">Період</td><td>@Model.Academicperiod</td></tr>
+                    <tr><td class="text-muted">Подано</td><td>@Model.Submissiondate?.ToString("dd.MM.yyyy HH:mm")</td></tr>
+                </table>
+
+                <hr />
+                <h5 class="card-title">Рішення</h5>
+
+                @* Схвалити *@
+                <form asp-action="Approve" method="post" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Applicationid" />
+                    <button type="submit" class="btn btn-success rounded-pill"
+                            @(canApprove ? "" : "disabled")>
+                        Схвалити
+                    </button>
+                    @if (!canApprove)
+                    {
+                        <small class="text-danger d-block mt-1">
+                            Неможливо схвалити — є відсутні або прострочені документи
+                        </small>
+                    }
+                </form>
+
+                <hr />
+
+                @* Відхилити *@
+                <form asp-action="Reject" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Applicationid" />
+                    <div class="form-group mb-2">
+                        <label class="form-label">Причина відмови</label>
+                        <textarea name="rejectionreason" class="form-control" rows="3" placeholder="Вкажіть причину відмови..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger rounded-pill">Відхилити</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-secondary rounded-pill mt-3">Назад до списку</a>

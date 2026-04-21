@@ -1,45 +1,105 @@
 @model Dormitory.Domain.Entities.Application
 
 @{
-    ViewData["Title"] = "Деталі";
+    ViewData["Title"] = "Деталі заяви";
+    var docs = ViewBag.StudentDocuments as List<Dormitory.Domain.Entities.Document> ?? new();
+    var requiredTypes = ViewBag.RequiredTypes as List<Dormitory.Domain.Entities.DocumentType> ?? new();
+    var uploadedTypeIds = docs.Select(d => d.Typeid).ToHashSet();
+    var statusName = Model.Status?.Statusname ?? "";
 }
 
-<h1>Деталі заяви</h1>
-<hr />
+<h2>Деталі заяви</h2>
 
-<dl class="row">
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Applicationtype)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Applicationtype)</dd>
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Дані заяви</h5>
+                <table class="table table-borderless table-sm">
+                    <tr><td class="text-muted" style="width:180px;">Студент</td><td><strong>@Model.Student?.Fullname</strong></td></tr>
+                    <tr><td class="text-muted">Тип заяви</td><td>@Model.Applicationtype</td></tr>
+                    <tr><td class="text-muted">Академічний період</td><td>@Model.Academicperiod</td></tr>
+                    <tr><td class="text-muted">Дата подачі</td><td>@Model.Submissiondate?.ToString("dd.MM.yyyy HH:mm")</td></tr>
+                    <tr><td class="text-muted">Статус</td><td>@statusName</td></tr>
+                    @if (Model.Decisiondate.HasValue)
+                    {
+                        <tr><td class="text-muted">Дата рішення</td><td>@Model.Decisiondate?.ToString("dd.MM.yyyy HH:mm")</td></tr>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Rejectionreason))
+                    {
+                        <tr><td class="text-muted">Причина відмови</td><td class="text-danger">@Model.Rejectionreason</td></tr>
+                    }
+                    @if (Model.Admin != null)
+                    {
+                        <tr><td class="text-muted">Розглянув</td><td>@Model.Admin.Username</td></tr>
+                    }
+                    @if (Model.Extensionstartdate.HasValue)
+                    {
+                        <tr><td class="text-muted">Пролонгація</td><td>@Model.Extensionstartdate?.ToString("dd.MM.yyyy") — @Model.Extensionenddate?.ToString("dd.MM.yyyy")</td></tr>
+                    }
+                </table>
 
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Submissiondate)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Submissiondate)</dd>
+                @if (Model.Student != null)
+                {
+                    <hr />
+                    <h6>Дані студента</h6>
+                    <table class="table table-borderless table-sm">
+                        <tr><td class="text-muted" style="width:180px;">Курс</td><td>@Model.Student.Course</td></tr>
+                        <tr><td class="text-muted">Факультет</td><td>@Model.Student.Faculty?.Facultyname</td></tr>
+                        <tr><td class="text-muted">Email</td><td>@Model.Student.Email</td></tr>
+                        <tr><td class="text-muted">Телефон</td><td>@Model.Student.Phone</td></tr>
+                        <tr><td class="text-muted">Стать</td><td>@(Model.Student.Gender == "Ч" ? "Чоловіча" : "Жіноча")</td></tr>
+                        <tr><td class="text-muted">Відстань</td><td>@Model.Student.DistanceKm км</td></tr>
+                        <tr><td class="text-muted">Пільга</td><td>@(Model.Student.HasPrivilege ? "Так" : "Ні")</td></tr>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
 
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Decisiondate)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Decisiondate)</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Rejectionreason)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Rejectionreason)</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Extensionstartdate)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Extensionstartdate)</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Extensionenddate)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Extensionenddate)</dd>
-
-    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Academicperiod)</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Academicperiod)</dd>
-
-    <dt class="col-sm-3">Статус</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Status.Statusname)</dd>
-
-    <dt class="col-sm-3">Студент</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Student.Fullname)</dd>
-
-    <dt class="col-sm-3">Адмін</dt>
-    <dd class="col-sm-9">@Html.DisplayFor(model => model.Admin.Username)</dd>
-</dl>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Документи студента</h5>
+                <table class="table table-sm">
+                    <thead><tr><th>Документ</th><th>Дата видачі</th><th>Дійсний до</th><th>Статус</th></tr></thead>
+                    <tbody>
+                        @foreach (var type in requiredTypes)
+                        {
+                            var doc = docs.FirstOrDefault(d => d.Typeid == type.Typeid);
+                            var isExpired = doc?.Expirydate.HasValue == true && doc.Expirydate.Value < DateTime.Today;
+                            <tr>
+                                <td>
+                                    @type.Typename
+                                    @if (type.IsPrivilegeDoc) { <span class="badge bg-info text-dark">пільга</span> }
+                                </td>
+                                @if (doc != null)
+                                {
+                                    <td>@doc.Issuedate?.ToString("dd.MM.yyyy")</td>
+                                    <td>@doc.Expirydate?.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        @if (isExpired) { <span>Прострочений</span> }
+                                        else { <span style="color:#534AB7;">✔</span> }
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td colspan="2"></td>
+                                    <td>Немає</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="d-flex gap-2 mt-3">
-    <a asp-action="Edit" asp-route-id="@Model?.Applicationid" class="btn btn-outline-primary rounded-pill">Редагувати</a>
-    <a asp-action="Index" class="btn btn-outline-primary rounded-pill">Назад до списку</a>
+    @if (statusName == "На розгляді")
+    {
+        <a asp-action="Review" asp-route-id="@Model.Applicationid" class="btn btn-outline-primary rounded-pill">Розглянути заяву</a>
+    }
+    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill">Назад до списку</a>
 </div>

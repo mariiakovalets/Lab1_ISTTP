@@ -7,14 +7,14 @@
 <h1>Список адміністраторів</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати нового адміністратора</a>
+    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати адміністратора</a>
 </p>
 
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.Username)</th>
-            <th>@Html.DisplayNameFor(model => model.Fullname)</th>
+            <th>Логін</th>
+            <th>ПІБ</th>
             <th></th>
         </tr>
     </thead>
@@ -22,13 +22,12 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Username)</td>
-                <td>@Html.DisplayFor(modelItem => item.Fullname)</td>
+                <td>@item.Username</td>
+                <td>@item.Fullname</td>
                 <td>
                     <div class="d-flex gap-1">
                         <a asp-action="Edit" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
                         <a asp-action="Details" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
-                        <a asp-action="Delete" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
                     </div>
                 </td>
             </tr>

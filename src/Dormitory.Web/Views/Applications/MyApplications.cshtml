@@ -4,7 +4,7 @@
     ViewData["Title"] = "Мої заяви";
 }
 
-<h2>Мої заяви</h2>
+<h2>Заяви</h2>
 
 @if (TempData["Success"] != null)
 {
@@ -28,7 +28,6 @@
     <table class="table mt-3">
         <thead>
             <tr>
-                <th>№</th>
                 <th>Тип заяви</th>
                 <th>Академічний період</th>
                 <th>Дата подачі</th>
@@ -40,34 +39,25 @@
         <tbody>
             @foreach (var item in Model)
             {
+                var statusName = item.Status?.Statusname ?? "Невідомо";
+                var badgeClass = statusName switch
+                {
+                    "Схвалено" => "bg-success",
+                    "Відхилено" => "bg-danger",
+                    "На розгляді" => "bg-warning text-dark",
+                    _ => "bg-secondary"
+                };
                 <tr>
-                    <td>@item.Applicationid</td>
                     <td>@item.Applicationtype</td>
                     <td>@item.Academicperiod</td>
                     <td>@item.Submissiondate?.ToString("dd.MM.yyyy HH:mm")</td>
-                    <td>
-                        @{
-                            var statusName = item.Status?.Statusname ?? "Невідомо";
-                            var badgeClass = statusName switch
-                            {
-                                "Схвалено" => "bg-success",
-                                "Відхилено" => "bg-danger",
-                                "На розгляді" => "bg-warning text-dark",
-                                _ => "bg-secondary"
-                            };
-                        }
-                        <span class="badge @badgeClass">@statusName</span>
-                    </td>
+                    <td>@statusName</td>
                     <td>@item.Decisiondate?.ToString("dd.MM.yyyy")</td>
                     <td>
                         @if (!string.IsNullOrEmpty(item.Rejectionreason))
-                        {
-                            <span class="text-danger">@item.Rejectionreason</span>
-                        }
+                        { <span class="text-danger">@item.Rejectionreason</span> }
                         else
-                        {
-                            <span class="text-muted">—</span>
-                        }
+                        { <span class="text-muted">—</span> }
                     </td>
                 </tr>
             }

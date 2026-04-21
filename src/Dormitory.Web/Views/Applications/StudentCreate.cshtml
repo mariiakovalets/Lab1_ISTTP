@@ -56,11 +56,11 @@
                                 <td>@type.Typename</td>
                                 <td>
                                     @if (doc != null && !isExpired)
-                                    { <span class="text-success">✅</span> }
+                                    { <span class="text-success"><span style="color:#534AB7;">✔</span></span> }
                                     else if (doc != null && isExpired)
-                                    { <span class="text-danger">⚠️ Прострочений</span> }
+                                    { <span class="text-danger"><span style="color:#e6c200;">⚠</span> Прострочений</span> }
                                     else
-                                    { <span class="text-danger">❌</span> }
+                                    { <span class="text-danger"><span style="color:#999;">✘</span></span> }
                                 </td>
                             </tr>
                         }
@@ -74,11 +74,11 @@
                                     {
                                         var privDoc = uploadedDocs.First(d => privilegeTypes.Any(pt => pt.Typeid == d.Typeid));
                                         var privType = privilegeTypes.First(pt => pt.Typeid == privDoc.Typeid);
-                                        <span class="text-success">✅ @privType.Typename</span>
+                                        <span class="text-success"><span style="color:#534AB7;">✔</span> @privType.Typename</span>
                                     }
                                     else
                                     {
-                                        <span class="text-danger">❌</span>
+                                        <span class="text-danger"><span style="color:#999;">✘</span></span>
                                     }
                                 </td>
                             </tr>

@@ -4,38 +4,36 @@
     ViewData["Title"] = "Історія проживання";
 }
 
-<h1>Список історії проживання</h1>
+<h1>Історія проживання</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати новий запис</a>
-</p>
-
-<table class="table">
+<table class="table mt-3">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.Student)</th>
-            <th>@Html.DisplayNameFor(model => model.Room)</th>
-            <th>@Html.DisplayNameFor(model => model.Checkindate)</th>
-            <th>@Html.DisplayNameFor(model => model.Checkoutdate)</th>
-            <th></th>
+            <th>Студент</th>
+            <th>Кімната</th>
+            <th>Поверх</th>
+            <th>Дата заселення</th>
+            <th>Дата виселення</th>
+            <th>Статус</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
+            var isActive = !item.Checkoutdate.HasValue;
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Student.Fullname)</td>
-                <td>@Html.DisplayFor(modelItem => item.Room.Roomnumber)</td>
-                <td>@Html.DisplayFor(modelItem => item.Checkindate)</td>
-                <td>@Html.DisplayFor(modelItem => item.Checkoutdate)</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <a asp-action="Edit" asp-route-id="@item.Historyid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
-                        <a asp-action="Details" asp-route-id="@item.Historyid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
-                        <a asp-action="Delete" asp-route-id="@item.Historyid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
-                    </div>
-                </td>
+                <td>@item.Student?.Fullname</td>
+                <td>@item.Room?.Roomnumber</td>
+                <td>@item.Room?.Floor</td>
+                <td>@item.Checkindate?.ToString("dd.MM.yyyy")</td>
+                <td>@item.Checkoutdate?.ToString("dd.MM.yyyy")</td>
+                <td>@(isActive ? "Проживає" : "Виселений")</td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (!Model.Any())
+{
+    <p class="text-muted mt-3">Записів немає.</p>
+}

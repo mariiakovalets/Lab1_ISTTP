@@ -1,66 +1,76 @@
 ﻿@{
     ViewData["Title"] = "Головна";
+    var fullName = ViewBag.FullName as string;
 }
-
-<div class="text-center">
-    <h1>Система управління гуртожитком</h1>
-</div>
 
 @if (User.Identity == null || !User.Identity.IsAuthenticated)
 {
-    <div class="text-center mt-4">
-        <p class="text-muted">Для роботи з системою увійдіть або зареєструйтесь</p>
-        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary rounded-pill me-2">Увійти</a>
-        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary rounded-pill">Реєстрація</a>
+    <div style="margin: -1rem -0.75rem 0; position:relative; min-height:100vh; display:flex; flex-direction:column; overflow:hidden;">
+        <div style="position:absolute; inset:0; background:url('/images/dorm.jpg') center/cover no-repeat;"></div>
+        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.4);"></div>
+        @* <div style="position:relative; z-index:1; padding:1.5rem 2rem;">
+            <span style="color:#fff; font-size:1.5rem; font-weight:700; letter-spacing:0.5px;">Dormitory.Web</span>
+        </div> *@
+        <div style="position:relative; z-index:1; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem;">
+            <h1 style="color:#fff; font-size:2.6rem; font-weight:700; margin-bottom:0.5rem;">Знайди свій дім на час навчання</h1>
+
+            <a asp-controller="Account" asp-action="Login" class="btn btn-light rounded-pill px-5 py-2 mb-3" style="font-weight:600; font-size:1.05rem; min-width:200px;">Увійти</a>
+            <p style="color:rgba(255,255,255,0.7); font-size:0.95rem;">Не маєш акаунта? <a asp-controller="Account" asp-action="Register" style="color:#fff; font-weight:600; text-decoration:underline;">Зареєструватися</a></p>
+        </div>
     </div>
 }
+
 else if (User.IsInRole("admin"))
 {
-    <p class="text-center text-muted">Оберіть розділ для роботи</p>
-    <div class="row mt-4">
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+    @* ======== ADMIN DASHBOARD ======== *@
+    <div style="background:linear-gradient(135deg, #534AB7 0%, #3a2d8e 100%); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; color:#fff;">
+        <h2 style="margin:0; font-weight:700;">Панель адміністратора</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Студенти</h5>
-            <p class="card-text">Перегляд та управління студентами</p>
+            <p class="card-text text-muted">Перегляд списку студентів</p>
             <a asp-controller="Students" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Кімнати</h5>
-            <p class="card-text">Перегляд та управління кімнатами</p>
+            <p class="card-text text-muted">Управління кімнатами</p>
             <a asp-controller="Rooms" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Факультети</h5>
-            <p class="card-text">Перегляд та управління факультетами</p>
+            <p class="card-text text-muted">Управління факультетами</p>
             <a asp-controller="Faculties" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Заяви</h5>
-            <p class="card-text">Перегляд та управління заявами</p>
+            <p class="card-text text-muted">Перегляд та розгляд заяв</p>
             <a asp-controller="Applications" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Документи</h5>
-            <p class="card-text">Перегляд та управління документами</p>
+            <p class="card-text text-muted">Документи студентів</p>
             <a asp-controller="Documents" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
-            <h5 class="card-title">Адміністратори</h5>
-            <p class="card-text">Перегляд та управління адміністраторами</p>
-            <a asp-controller="Administrators" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Черга</h5>
+            <p class="card-text text-muted">Черга на поселення</p>
+            <a asp-controller="Queues" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Історія проживання</h5>
-            <p class="card-text">Перегляд історії проживання</p>
+            <p class="card-text text-muted">Записи заселення та виселення</p>
             <a asp-controller="Residencehistory" asp-action="Index" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
-        <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
             <h5 class="card-title">Ролі користувачів</h5>
-            <p class="card-text">Управління ролями та доступом</p>
+            <p class="card-text text-muted">Управління доступом</p>
             <a asp-controller="Roles" asp-action="UserList" class="btn btn-outline-primary rounded-pill">Перейти</a>
         </div></div></div>
     </div>
 
-    <div class="mt-5">
+    <div class="mt-4">
         <h2 id="statsToggle" style="cursor:pointer; user-select:none;" class="mb-0">
             Діаграми <span id="statsArrow" style="font-size:1.2rem;">▾</span>
         </h2>
@@ -77,19 +87,10 @@ else if (User.IsInRole("admin"))
                 </div></div></div>
                 <div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body p-4">
                     <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:0.75rem; letter-spacing:0.08em">Статуси заяв</h6>
-                    <div style="display:flex; gap:16px; margin-bottom:10px; font-size:12px; color:#888;">
-                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#D85A30;display:inline-block;"></span>Відхилено</span>
-                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#534AB7;display:inline-block;"></span>Схвалено</span>
-                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#AFA9EC;display:inline-block;"></span>На розгляді</span>
-                    </div>
                     <div style="position:relative; height:240px;"><canvas id="applicationsByStatusChart"></canvas></div>
                 </div></div></div>
                 <div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body p-4">
                     <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:0.75rem; letter-spacing:0.08em">Заселеність кімнат</h6>
-                    <div style="display:flex; gap:16px; margin-bottom:10px; font-size:12px; color:#888;">
-                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#534AB7;display:inline-block;"></span>Зайнято</span>
-                        <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#EEEDFE;border:1px solid #d0cdf5;display:inline-block;"></span>Вільно</span>
-                    </div>
                     <div style="position:relative; height:240px;"><canvas id="roomOccupancyChart"></canvas></div>
                 </div></div></div>
             </div>
@@ -98,31 +99,38 @@ else if (User.IsInRole("admin"))
 }
 else if (User.IsInRole("user"))
 {
-    <div class="mt-4">
-        <h4>Вітаємо, @User.Identity?.Name!</h4>
-        <p class="text-muted">Оберіть дію</p>
-        <div class="row mt-3">
-            <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
-                <h5 class="card-title">Мій профіль</h5>
-                <p class="card-text">Переглянути та редагувати персональні дані</p>
-                <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-primary rounded-pill">Переглянути</a>
-            </div></div></div>
-            <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
-                <h5 class="card-title">Подати заяву</h5>
-                <p class="card-text">Створити нову заяву на поселення в гуртожиток</p>
-                <a asp-controller="Applications" asp-action="StudentCreate" class="btn btn-outline-primary rounded-pill">Подати заяву</a>
-            </div></div></div>
-            <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
-                <h5 class="card-title">Мої заяви</h5>
-                <p class="card-text">Переглянути статус поданих заяв</p>
-                <a asp-controller="Applications" asp-action="MyApplications" class="btn btn-outline-primary rounded-pill">Переглянути</a>
-            </div></div></div>
-            <div class="col-md-4 mb-3"><div class="card"><div class="card-body">
-                <h5 class="card-title">Моя позиція в черзі</h5>
-                <p class="card-text">Дізнатися свою позицію в черзі на поселення</p>
-                <a asp-controller="Queues" asp-action="MyPosition" class="btn btn-outline-primary rounded-pill">Переглянути</a>
-            </div></div></div>
-        </div>
+    @* ======== STUDENT DASHBOARD ======== *@
+    <div style="background:linear-gradient(135deg, #534AB7 0%, #3a2d8e 100%); border-radius:16px; padding:2rem 2.5rem; margin-bottom:2rem; color:#fff;">
+        <h2 style="margin:0; font-weight:700;">Вітаємо, @(fullName ?? User.Identity?.Name)!</h2>
+        <p style="margin:0.5rem 0 0; opacity:0.85;">Оберіть дію</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Профіль</h5>
+            <p class="card-text text-muted">Переглянути та редагувати дані</p>
+            <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-primary rounded-pill">Переглянути</a>
+        </div></div></div>
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Подати заяву</h5>
+            <p class="card-text text-muted">Нова заява на поселення</p>
+            <a asp-controller="Applications" asp-action="StudentCreate" class="btn btn-outline-primary rounded-pill">Подати</a>
+        </div></div></div>
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Заяви</h5>
+            <p class="card-text text-muted">Статус поданих заяв</p>
+            <a asp-controller="Applications" asp-action="MyApplications" class="btn btn-outline-primary rounded-pill">Переглянути</a>
+        </div></div></div>
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Документи</h5>
+            <p class="card-text text-muted">Завантажити або переглянути</p>
+            <a asp-controller="Account" asp-action="MyDocuments" class="btn btn-outline-primary rounded-pill">Переглянути</a>
+        </div></div></div>
+        <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Черга</h5>
+            <p class="card-text text-muted">Позиція в черзі на поселення</p>
+            <a asp-controller="Queues" asp-action="MyPosition" class="btn btn-outline-primary rounded-pill">Переглянути</a>
+        </div></div></div>
     </div>
 }
 

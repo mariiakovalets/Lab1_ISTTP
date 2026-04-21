@@ -16,20 +16,42 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title mb-3">Ваші дані</h5>
-
-                <p class="text-muted mb-1">ПІБ (не можна змінити)</p>
-                <p class="fw-bold">@Model.Fullname</p>
-
-                <p class="text-muted mb-1">Курс (не можна змінити)</p>
-                <p class="fw-bold">@Model.Course</p>
-
-                <p class="text-muted mb-1">Факультет (не можна змінити)</p>
-                <p class="fw-bold">@Model.Faculty?.Facultyname</p>
-
-                <hr />
+                <h5 class="card-title mb-3">Редагування даних</h5>
 
                 <form asp-action="EditProfile" method="post">
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">ПІБ</label>
+                        <input name="fullname" class="form-control" value="@Model.Fullname" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Курс (1–6)</label>
+                        <input name="course" type="number" min="1" max="6" class="form-control" value="@Model.Course" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Факультет</label>
+                        <select name="facultyid" class="form-select" asp-items="@(ViewData["FacultyId"] as SelectList)">
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Стать</label>
+                        <select name="gender" class="form-select">
+                            <option value="Ч" selected="@(Model.Gender == "Ч")">Чоловіча</option>
+                            <option value="Ж" selected="@(Model.Gender == "Ж")">Жіноча</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="control-label">Дата народження</label>
+                        <input name="birthdate" type="date" class="form-control"
+                               value="@Model.Birthdate?.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <hr />
+
                     <div class="form-group mb-3">
                         <label class="control-label">Адреса</label>
                         <input name="address" class="form-control" value="@Model.Address" />

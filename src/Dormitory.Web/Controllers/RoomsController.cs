@@ -7,7 +7,7 @@ using Dormitory.Infrastructure.Services;
 
 namespace Dormitory.Web.Controllers
 {
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,superadmin")]
     public class RoomsController : Controller
     {
         private readonly DormitoryContext _context;

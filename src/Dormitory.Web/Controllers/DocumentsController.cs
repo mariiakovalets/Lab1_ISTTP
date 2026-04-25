@@ -11,7 +11,7 @@ using Dormitory.Infrastructure.Data;
 
 namespace Dormitory.Web.Controllers
 {
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin,superadmin")]
     public class DocumentsController : Controller
     {
         private readonly DormitoryContext _context;

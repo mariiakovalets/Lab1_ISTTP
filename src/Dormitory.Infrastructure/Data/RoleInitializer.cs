@@ -7,8 +7,9 @@ public class RoleInitializer
 {
     public static async Task InitializeAsync(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
-/*         string adminEmail = "admin@dormitory.com";
-        string password   = "Admin_1234";
+        // Створюємо ролі
+        if (await roleManager.FindByNameAsync("superadmin") == null)
+            await roleManager.CreateAsync(new IdentityRole("superadmin"));
 
         if (await roleManager.FindByNameAsync("admin") == null)
             await roleManager.CreateAsync(new IdentityRole("admin"));
@@ -16,36 +17,36 @@ public class RoleInitializer
         if (await roleManager.FindByNameAsync("user") == null)
             await roleManager.CreateAsync(new IdentityRole("user"));
 
+        // Головний адмін — Петренко Іван
+        string adminEmail = "ipetrenko@gmail.com";
+        string adminPassword = "Qwerty_123";
+
         if (await userManager.FindByNameAsync(adminEmail) == null)
         {
             User admin = new User
             {
-                Email    = adminEmail,
+                Email = adminEmail,
                 UserName = adminEmail,
-                FullName = "Головний адміністратор"
-            };
-
-            IdentityResult result = await userManager.CreateAsync(admin, password);
-            if (result.Succeeded)
-                await userManager.AddToRoleAsync(admin, "admin");
-        } */
-
-        // Другий адмін — Петренко Іван
-        string admin2Email = "ipetrenko@gmail.com";
-        string admin2Password = "Qwerty_123";
-
-        if (await userManager.FindByNameAsync(admin2Email) == null)
-        {
-            User admin2 = new User
-            {
-                Email = admin2Email,
-                UserName = admin2Email,
                 FullName = "Петренко Іван"
             };
 
-            IdentityResult result2 = await userManager.CreateAsync(admin2, admin2Password);
-            if (result2.Succeeded)
-                await userManager.AddToRoleAsync(admin2, "admin");
+            IdentityResult result = await userManager.CreateAsync(admin, adminPassword);
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(admin, "superadmin");
+        }
+        else
+        {
+            // Якщо вже існує — переконатись що має роль superadmin
+            var existingAdmin = await userManager.FindByNameAsync(adminEmail);
+            if (existingAdmin != null && !await userManager.IsInRoleAsync(existingAdmin, "superadmin"))
+            {
+                await userManager.AddToRoleAsync(existingAdmin, "superadmin");
+            }
+            // Прибрати стару роль admin якщо є
+            if (existingAdmin != null && await userManager.IsInRoleAsync(existingAdmin, "admin"))
+            {
+                await userManager.RemoveFromRoleAsync(existingAdmin, "admin");
+            }
         }
     }
 }

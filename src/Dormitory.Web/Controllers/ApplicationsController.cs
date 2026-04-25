@@ -28,7 +28,7 @@ namespace Dormitory.Web.Controllers
         }
 
         // ============ ADMIN: список заяв ============
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Index()
         {
             var apps = await _context.Applications.AsNoTracking()
@@ -38,7 +38,7 @@ namespace Dormitory.Web.Controllers
         }
 
         // ============ ADMIN: деталі заяви + документи ============
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -53,7 +53,7 @@ namespace Dormitory.Web.Controllers
         }
 
         // ============ ADMIN: розгляд заяви ============
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Review(int? id)
         {
             if (id == null) return NotFound();
@@ -191,7 +191,7 @@ namespace Dormitory.Web.Controllers
 
         // ============ ADMIN: CRUD (Create, Edit, Delete) — залишаються як є ============
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public IActionResult Create()
         {
             ViewData["Adminid"] = new SelectList(_context.Administrators, "Adminid", "Username");
@@ -216,7 +216,7 @@ namespace Dormitory.Web.Controllers
             return View(application);
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -245,7 +245,7 @@ namespace Dormitory.Web.Controllers
             return View(application);
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -264,7 +264,7 @@ namespace Dormitory.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "admin")] public IActionResult Import() => View();
+        [Authorize(Roles = "admin,superadmin")] public IActionResult Import() => View();
 
         [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = "admin")]
         public async Task<IActionResult> Import(IFormFile fileExcel, CancellationToken ct)

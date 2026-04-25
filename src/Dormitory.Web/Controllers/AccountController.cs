@@ -440,4 +440,46 @@ public class AccountController : Controller
             availableTypes.Select(t => new { t.Typeid, t.RequiresIssueDate, t.IsLifetime }));
         return View("UploadDocument");
     }
+
+    // ============ ЗМІНА ПАРОЛЯ ============
+
+    [Authorize]
+    [HttpGet]
+    public IActionResult ChangePassword()
+    {
+        return View();
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return RedirectToAction("Login");
+
+        if (model.OldPassword == model.NewPassword)
+        {
+            ModelState.AddModelError("", "Новий пароль не може збігатися з поточним.");
+            return View(model);
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+        if (result.Succeeded)
+        {
+            await _signInManager.RefreshSignInAsync(user);
+            TempData["Success"] = "Пароль успішно змінено!";
+            return RedirectToAction("ChangePassword");
+        }
+        else
+        {
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+        }
+        return View(model);
+    }
 }

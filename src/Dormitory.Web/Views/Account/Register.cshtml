@@ -93,7 +93,7 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label asp-for="Address" class="control-label"></label>
-                                <input asp-for="Address" class="form-control" placeholder="напр. м. Дніпро" />
+                                <input asp-for="Address" class="form-control"  id="addressInput" autocomplete="off" />
                                 <span asp-validation-for="Address" class="text-danger"></span>
                             </div>
                         </div>
@@ -109,7 +109,7 @@
                         <div class="col-md-4">
                             <div class="form-group mb-3">
                                 <label asp-for="DistanceKm" class="control-label"></label>
-                                <input asp-for="DistanceKm" class="form-control" placeholder="напр. 490" />
+                                <input asp-for="DistanceKm" class="form-control"  id="distanceInput" readonly />
                                 <span asp-validation-for="DistanceKm" class="text-danger"></span>
                             </div>
                         </div>
@@ -134,4 +134,71 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+<script>
+    const addressInput = document.getElementById('addressInput');
+    const distanceInput = document.getElementById('distanceInput');
+    let timeout = null;
+    let dropdown = null;
+
+    function createDropdown() {
+        dropdown = document.createElement('div');
+        dropdown.style.cssText = 'position:absolute;z-index:999;background:#fff;border:1.5px solid #534AB7;border-radius:12px;max-height:200px;overflow-y:auto;width:100%;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+        addressInput.parentNode.style.position = 'relative';
+        addressInput.parentNode.appendChild(dropdown);
+    }
+
+    createDropdown();
+
+    addressInput.addEventListener('input', function () {
+        clearTimeout(timeout);
+        const query = addressInput.value.trim();
+        if (query.length < 2) { dropdown.style.display = 'none'; return; }
+
+        timeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=ua&format=json&limit=5&addressdetails=1`, {
+                    headers: { 'Accept-Language': 'uk' }
+                });
+                const data = await res.json();
+                dropdown.innerHTML = '';
+
+                if (data.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const option = document.createElement('div');
+                    option.style.cssText = 'padding:8px 12px;cursor:pointer;font-size:0.9rem;border-bottom:1px solid #eee;';
+                    option.textContent = item.display_name;
+                    option.addEventListener('mouseenter', () => option.style.backgroundColor = '#f8f7ff');
+                    option.addEventListener('mouseleave', () => option.style.backgroundColor = '#fff');
+                    option.addEventListener('click', () => {
+                        addressInput.value = item.display_name.split(',').slice(0, 3).join(',').trim();
+                        dropdown.style.display = 'none';
+
+                        const lat = parseFloat(item.lat);
+                        const lon = parseFloat(item.lon);
+                        const kyivLat = 50.4501, kyivLon = 30.5234;
+                        const R = 6371;
+                        const dLat = (lat - kyivLat) * Math.PI / 180;
+                        const dLon = (lon - kyivLon) * Math.PI / 180;
+                        const a = Math.sin(dLat / 2) ** 2 + Math.cos(kyivLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+                        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+                        distanceInput.value = dist;
+                    });
+                    dropdown.appendChild(option);
+                });
+                dropdown.style.display = 'block';
+            } catch { dropdown.style.display = 'none'; }
+        }, 600);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!addressInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+</script>
 }

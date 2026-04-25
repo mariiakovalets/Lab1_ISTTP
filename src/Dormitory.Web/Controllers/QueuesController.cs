@@ -20,7 +20,7 @@ namespace Dormitory.Web.Controllers
         }
 
         // ADMIN: повна черга
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,superadmin")]
         public async Task<IActionResult> Index()
         {
             var queue = await _context.Queues

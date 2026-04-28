@@ -42,7 +42,6 @@
                                 <a class="nav-link dropdown-toggle text-dark" href="#" data-bs-toggle="dropdown">Адміністрування</a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" asp-controller="Rooms" asp-action="Index">Кімнати</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Administrators" asp-action="Index">Адміністратори</a></li>
                                     <li><a class="dropdown-item" asp-controller="Residencehistory" asp-action="Index">Історія проживання</a></li>
                                     @if (User.IsInRole("superadmin"))
                                     {

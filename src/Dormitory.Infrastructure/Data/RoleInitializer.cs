@@ -34,6 +34,23 @@ public class RoleInitializer
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(admin, "superadmin");
         }
+        // Адмін — Іванов Петро
+string admin2Email = "p_ivanov@gmail.com";
+string admin2Password = "Qwerty_123";
+
+if (await userManager.FindByNameAsync(admin2Email) == null)
+{
+    User admin2 = new User
+    {
+        Email = admin2Email,
+        UserName = admin2Email,
+        FullName = "Іванов Петро"
+    };
+
+    IdentityResult result2 = await userManager.CreateAsync(admin2, admin2Password);
+    if (result2.Succeeded)
+        await userManager.AddToRoleAsync(admin2, "admin");
+}
         else
         {
             // Якщо вже існує — переконатись що має роль superadmin

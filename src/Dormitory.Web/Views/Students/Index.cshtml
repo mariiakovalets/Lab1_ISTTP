@@ -36,7 +36,7 @@
                 <td>@(item.Gender == "Ч" ? "Чол" : "Жін")</td>
                 <td>@item.Faculty?.Facultyname</td>
                 <td>@item.DistanceKm км</td>
-                <td>@(item.HasPrivilege ? "✅" : "")</td>
+                <td>@(item.HasPrivilege ? Html.Raw("<span style=\"color:#534AB7;\">✔</span>") : Html.Raw(""))</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.Studentid" class="btn btn-sm btn-outline-secondary rounded-pill">Деталі</a>
                 </td>

@@ -157,7 +157,7 @@
 
         timeout = setTimeout(async () => {
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=ua&format=json&limit=5&addressdetails=1`, {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=ua&format=json&limit=5&addressdetails=1&featuretype=settlement`, {
                     headers: { 'Accept-Language': 'uk' }
                 });
                 const data = await res.json();
@@ -171,7 +171,9 @@
                 data.forEach(item => {
                     const option = document.createElement('div');
                     option.style.cssText = 'padding:8px 12px;cursor:pointer;font-size:0.9rem;border-bottom:1px solid #eee;';
-                    option.textContent = item.display_name;
+                    const parts = item.display_name.split(',').map(s => s.trim());
+                    const filtered = parts.filter(p => p !== 'Україна' && !/^\d{5}$/.test(p) && !p.includes('громада'));
+                    option.textContent = filtered.join(', ');
                     option.addEventListener('mouseenter', () => option.style.backgroundColor = '#f8f7ff');
                     option.addEventListener('mouseleave', () => option.style.backgroundColor = '#fff');
                     option.addEventListener('click', () => {

@@ -6,9 +6,12 @@
 
 <h1>Список адміністраторів</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати адміністратора</a>
-</p>
+@if (User.IsInRole("superadmin"))
+{
+    <p>
+        <a asp-action="Create" class="btn btn-outline-primary mb-3 rounded-pill">Додати адміністратора</a>
+    </p>
+}
 
 <table class="table">
     <thead>
@@ -26,8 +29,15 @@
                 <td>@item.Fullname</td>
                 <td>
                     <div class="d-flex gap-1">
-                        <a asp-action="Edit" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
+                        @if (User.IsInRole("superadmin") || User.Identity?.Name == item.Username)
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-primary rounded-pill">Редагувати</a>
+                        }
                         <a asp-action="Details" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-primary rounded-pill">Деталі</a>
+                        @if (User.IsInRole("superadmin"))
+                        {
+                            <a asp-action="Delete" asp-route-id="@item.Adminid" class="btn btn-sm btn-outline-danger rounded-pill">Видалити</a>
+                        }
                     </div>
                 </td>
             </tr>

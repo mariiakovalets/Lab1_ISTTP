@@ -39,7 +39,7 @@ public class RegisterViewModel
     public DateOnly? Birthdate { get; set; }
 
     [Required(ErrorMessage = "Введіть адресу")]
-    [Display(Name = "Адреса (місто проживання)")]
+    [Display(Name = "Місце проживання")]
     public string? Address { get; set; }
 
     [Required(ErrorMessage = "Введіть телефон")]
